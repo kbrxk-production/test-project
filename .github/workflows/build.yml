@@ -1,0 +1,33 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Solo ejecuta en push si NO hay un pull request asociado, o siempre en pull_request
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pull_request == null)
+    runs-on: etiqueta.runner.qa
+    steps:
+      - name: Build
+        run: echo "Building the project..."
+      - name: Test
+        run: echo "Running tests..."
+      - name: Scan
+        run: echo "Scanning the project..."
+      - name: Generar Release
+        run: echo "Generando release..."
+
+  deploy:
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: etiqueta.runner.qa
+    steps:
+      - name: Deploy
+        run: echo "Desplegando manualmente..."
