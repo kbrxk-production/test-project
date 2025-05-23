@@ -2,26 +2,10 @@ name: build
 
 on:
   push:
-    branches:
-      - main
-  pull_request_target:
-    branches:
-      - main
-  workflow_dispatch:
 
 jobs:
-  build:
-    # Solo ejecuta en push si NO hay un pull request asociado, o siempre en pull_request
-    if: github.event_name == 'pull_request_target' || (github.event_name == 'push' && github.event.pull_request == null)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build
-        run: echo "Building the project..."
-
-  deploy:
-    needs: build
-    if: github.event_name == 'pull_request_target'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy
-        run: echo "Desplegando manualmente..."
+  build-dotnet:
+    uses: './.github/workflows/build-dotnet.yml'
+    with:
+      net_version: '6.0'
+      net_framework: 'console'

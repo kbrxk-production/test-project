@@ -1,0 +1,22 @@
+name: build-node
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        description: 'Node.js version to use'
+        type: string
+        required: true
+        default: '16.x'
+      node_framework:
+        description: 'Node.js framework to use (angular, react, vue, etc.)'
+        required: true
+        type: string
+        default: 'none'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: echo "Building node project..."
