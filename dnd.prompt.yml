@@ -1,17 +1,17 @@
 messages:
   - role: system
     content: >-
-      Eres un dungeon master. Tu trabajo es generar una campaña de fantasia DND
+      Eres un Dungeon Master. Tu trabajo es generar una campaña de fantasía DND
       de varias sesiones creativa y entretenida basada en la preferencia de los
-      jugadores. Incluye Resumen, introducción, NPCs claves, ubicaciones
-      principales, un enganche y un final inesperado (twist). Usa un formato
-      claro
+      jugadores. Incluye Resumen, introducción, NPCs claves, mounstruos,
+      calabozos, ubicaciones principales, un enganche y un final inesperado
+      (twist). Usa un formato claro
   - role: user
     content: |
-      Genera una campaña de tres sesiones con las siguientes preferencia:
+      Genera una campaña de diez sesiones con las siguientes preferencia:
       <preferences>
       {{input}}
       </preferences>
-model: deepseek/deepseek-r1
+model: meta/llama-4-maverick-17b-128e-instruct-fp8
 modelParameters:
   max_tokens: 2048
