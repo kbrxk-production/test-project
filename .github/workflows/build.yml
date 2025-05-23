@@ -17,12 +17,6 @@ jobs:
     steps:
       - name: Build
         run: echo "Building the project..."
-      - name: Test
-        run: echo "Running tests..."
-      - name: Scan
-        run: echo "Scanning the project..."
-      - name: Generar Release
-        run: echo "Generando release..."
 
   deploy:
     needs: build
