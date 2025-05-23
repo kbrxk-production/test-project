@@ -17,11 +17,3 @@ jobs:
     steps:
       - name: Build
         run: echo "Building the project..."
-
-  deploy:
-    needs: build
-    if: github.event_name == 'pull_request_target'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy
-        run: echo "Desplegando manualmente..."
