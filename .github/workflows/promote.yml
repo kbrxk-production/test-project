@@ -1,7 +1,12 @@
 name: promote
 
 on:
-  workflow_run:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to promote to'
+        required: true
+        default: 'production'
 
 jobs:
   promote:
