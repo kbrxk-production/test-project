@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    uses: './.github/workflows/build-dotnet.yml'
+    uses: './.github/workflows/common-build-dotnet.yml'
     with:
       net_version: '6.0'
       net_framework: 'console'
