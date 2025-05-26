@@ -1,0 +1,18 @@
+name: build
+
+on:
+  push:
+  merge_group:
+
+jobs:
+  build-dotnet:
+    uses: './.github/workflows/common-build-dotnet.yml'
+    with:
+      net_version: '6.0'
+      net_framework: 'console'
+
+  build-node:
+    uses: './.github/workflows/common-build-node.yml'
+    with:
+      node_version: '16.x'
+      node_framework: 'none'

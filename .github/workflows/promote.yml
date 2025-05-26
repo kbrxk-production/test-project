@@ -1,7 +1,12 @@
 name: promote
 
 on:
-  workflow_call:
+  pull_request_target:
+    branches:
+      - main
+      - master
+    types:
+      - closed
 
 jobs:
   promote:
@@ -14,6 +19,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           BRANCH: main
           COMMIT_MESSAGE: "Promoting changes to production"
+
   notify:
     runs-on: ubuntu-latest
     needs: promote

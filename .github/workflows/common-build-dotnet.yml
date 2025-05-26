@@ -1,0 +1,43 @@
+name: build-dotnet
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: 'Lenguaje de programación a utilizar (node, dotnet, etc.)'
+        type: string
+        required: true
+        default: 'dotnet'
+      net_version:
+        description: 'Versión de .NET a utilizar'
+        type: string
+        required: true
+        default: '6.0'
+      net_framework:
+        type: string
+        description: 'Framework de .NET a utilizar (aspnet, console, etc.)'
+        required: true
+        default: 'console'
+  merge_group:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate .NET version
+        run: echo "Validating .NET version ${{ inputs.net_version }} and framework ${{ inputs.net_framework }}"
+
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.language == 'dotnet' }}
+    needs: validate
+    steps:
+      - name: Build
+        run: echo "Building .NET project..."
+
+  test:
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Test
+        run: echo "Running tests for .NET project..."

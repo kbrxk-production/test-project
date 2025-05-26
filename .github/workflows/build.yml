@@ -2,10 +2,12 @@ name: build
 
 on:
   push:
+  merge_group:
 
 jobs:
-  build-dotnet:
-    uses: './.github/workflows/build-dotnet.yml'
+  build:
+    uses: './.github/workflows/common-build.yml'
     with:
+      language: 'dotnet'
       net_version: '6.0'
       net_framework: 'console'
