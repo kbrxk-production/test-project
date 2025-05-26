@@ -4,8 +4,8 @@ on:
   push:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build
-        run: echo "Building the project..."
+  build-dotnet:
+    uses: './.github/workflows/build-dotnet.yml'
+    with:
+      net_version: '6.0'
+      net_framework: 'console'
