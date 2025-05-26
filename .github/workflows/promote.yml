@@ -1,0 +1,22 @@
+name: promote
+
+on:
+  workflow_call:
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promote
+        run: echo "Promoting the changes to production..."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: main
+          COMMIT_MESSAGE: "Promoting changes to production"
+  notify:
+    runs-on: ubuntu-latest
+    needs: promote
+    steps:
+      - name: Notify
+        run: echo "Notifying the servers about the promotion..."
