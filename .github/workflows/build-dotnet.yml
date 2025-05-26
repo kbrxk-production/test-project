@@ -15,7 +15,7 @@ on:
         default: 'console'
 
 jobs:
-  build:
+  dotnet:
     runs-on: ubuntu-latest
     steps:
       - name: Build
