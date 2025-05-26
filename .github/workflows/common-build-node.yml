@@ -13,6 +13,7 @@ on:
         required: true
         type: string
         default: 'none'
+  merge_group:
 
 jobs:
   node:

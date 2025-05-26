@@ -13,6 +13,7 @@ on:
         description: 'Framework de .NET a utilizar (aspnet, console, etc.)'
         required: true
         default: 'console'
+  merge_group:
 
 jobs:
   validate:
