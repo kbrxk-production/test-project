@@ -2,17 +2,9 @@ name: build
 
 on:
   push:
-    branches:
-      - main
-  pull_request_target:
-    branches:
-      - main
-  workflow_dispatch:
 
 jobs:
   build:
-    # Solo ejecuta en push si NO hay un pull request asociado, o siempre en pull_request
-    if: github.event_name == 'pull_request_target' || (github.event_name == 'push' && github.event.pull_request == null)
     runs-on: ubuntu-latest
     steps:
       - name: Build

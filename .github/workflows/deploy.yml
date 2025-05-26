@@ -1,15 +1,18 @@
 name: deploy
 
 on:
-  workflow_run:
-    workflows: ["build"] # Name of your build workflow (from build.yml)
-    types:
-      - completed
+  pull_request_target:
+    branches:
+      - main
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: echo "Building the project..."
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request_target' }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy
-        run: echo "Desplegando manualmente..."
+        run: echo "Desplegando..."
