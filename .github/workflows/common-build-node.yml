@@ -24,12 +24,11 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate .NET version
-        run: echo "Validating .NET version ${{ inputs.node_version }} and framework ${{ inputs.node_framework }}"
+      - name: Validate node version
+        run: echo "Validating node version ${{ inputs.node_version }} and framework ${{ inputs.node_framework }}"
 
-  build:
+  build-node:
     runs-on: ubuntu-latest
-    if: ${{ inputs.language == 'node' }}
     needs: validate
     steps:
       - name: Build

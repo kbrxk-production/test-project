@@ -27,7 +27,7 @@ jobs:
       - name: Validate .NET version
         run: echo "Validating .NET version ${{ inputs.net_version }} and framework ${{ inputs.net_framework }}"
 
-  build:
+  build-dotnet:
     runs-on: ubuntu-latest
     if: ${{ inputs.language == 'dotnet' }}
     needs: validate
