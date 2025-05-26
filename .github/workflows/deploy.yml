@@ -11,7 +11,16 @@ jobs:
     steps:
       - name: Build
         run: echo "Building the project..."
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release
+        run: echo "Creating a release..."
+
   deploy:
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - name: Deploy
