@@ -1,0 +1,21 @@
+spec:
+  inputs:
+    dbms-vendor:
+      default: ''
+---
+include:
+variables:
+  REPOSITORY_LANGUAGE: mysql
+  DATABASE_VENDOR: mariadb
+  MARIADB_USER: username
+  MARIADB_PASSWORD: 1234
+  MARIADB_ROOT_PASSWORD: 1234
+
+test:
+  services:
+    - name: mariadb:latest
+      alias: mariadb
+  variables:
+    DATABASE_NAME: mariadb
+    DB_CONNECTION_STRING: >
+      jdbc:mariadb://root:${MARIADB_ROOT_PASSWORD}@${DATABASE_NAME}:3306?createDatabaseIfNotExist=true

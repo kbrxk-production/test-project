@@ -1,0 +1,40 @@
+---
+
+# TODO: Solo formaea en minuscula y no acepta procedimientos almacenados
+
+sqlfmt:
+  interruptible: true
+  stage: code-review
+  image:
+    name: ghcr.io/tconbeer/sqlfmt:latest
+    entrypoint: [""]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - |
+      python -m venv /tmp/wget
+      /tmp/wget/bin/pip install --disable-pip-version-check --no-cache-dir -q requests
+
+      cat > wget.py << EOF
+      import requests, sys
+      r = requests.get(sys.argv[1])
+      open(sys.argv[2], 'wb').write(r.content)
+      EOF
+
+      FILE_LOCATION=fif/banco-falabella/devops/ci-cd/code-review-pipeline/-/raw/main/bin/sqlfmt.sh
+      /tmp/wget/bin/python wget.py https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${FILE_LOCATION} /tmp/sqlfmt.sh
+
+      chmod +x /tmp/sqlfmt.sh
+      /tmp/sqlfmt.sh || exit $?
+  rules:
+    - when: never
+    - if: >
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        $DATABASE_VENDOR  =~ /(^mariadb$|^postgres$)/
+      when: always

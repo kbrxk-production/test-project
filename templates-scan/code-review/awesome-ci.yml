@@ -1,0 +1,23 @@
+---
+awesome-ci:
+  interruptible: true
+  stage: code-review
+  image:
+    name: cytopia/awesome-ci:latest
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  dependencies: []
+  allow_failure:
+    exit_codes: 127
+  before_script:
+    - |
+      (apt -qq update && apt -qq install -y wget) > /dev/null 2>&1
+  script:
+    - !reference [.code-review, before_script]
+    - awesome-ci.sh || exit $?
+  rules:
+    - if: '$IS_DYNAMIC_JOB != "true"'
+      when: always

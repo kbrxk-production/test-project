@@ -1,0 +1,27 @@
+---
+yamllint:
+  extends: .common-code-review
+  interruptible: true
+  stage: code-review
+  image:
+    name: registry.gitlab.com/pipeline-components/yamllint:latest
+    entrypoint: ["/bin/sh", "-c"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - |
+      FILE_LOCATION=fif/banco-falabella/devops/ci-cd/code-review-pipeline/-/raw/main/bin/yamllint.sh
+      wget -q -O ${HOME}/yamllint.sh https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${FILE_LOCATION}
+      sh ${HOME}/yamllint.sh || exit $?
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - if: '$IS_DYNAMIC_JOB != "true"'
+      when: always

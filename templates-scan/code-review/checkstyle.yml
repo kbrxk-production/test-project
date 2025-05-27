@@ -1,0 +1,27 @@
+---
+checkstyle:
+  extends: .common-code-review
+  interruptible: true
+  stage: code-review
+  image:
+    name: gcr.io/bfa-cl-developenvironment-prd/utils/checkstyle:latest
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  variables:
+    CONFIGURATION_FILE: /tmp/google_checks.xml
+  script:
+    - !reference [.code-review, before_script]
+    - checkstyle.sh || exit $?
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+      - ${CONFIGURATION_FILE}
+    when: on_failure
+  rules:
+    - if: '$REPOSITORY_LANGUAGE == "java" && $CI_PIPELINE_TRIGGERED != "true"'
+      when: always

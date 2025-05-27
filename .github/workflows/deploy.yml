@@ -10,15 +10,19 @@ jobs:
   build:
     uses: './.github/workflows/common-build-dotnet.yml'
     with:
+      language: 'dotnet'
       net_version: '6.0'
       net_framework: 'console'
 
   release:
     runs-on: ubuntu-latest
-    needs: build
+    if: github.ref_type == 'tag'
     steps:
-      - name: Release
-        run: echo "Creating a release..."
+      - name: release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: README.md
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: release

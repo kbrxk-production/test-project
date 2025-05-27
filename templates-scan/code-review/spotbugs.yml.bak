@@ -1,0 +1,36 @@
+---
+variables:
+  SPOTBUGS_REPORT_PATH: ${REPORTS_PATH}/spotbugsXml.xml
+
+spotbugs:
+  stage: 📋 code-review
+  needs:
+    - job: init
+      optional: true
+  allow_failure: true
+  variables:
+    SPOTBUGS_VERSION: 4.7.3.4
+    MAVEN_CLI_OPTS: >-
+      --errors
+      --fail-at-end
+      --no-transfer-progress
+      -Ddetail=true
+      -DfailOnWarning=true
+      -Dstyle.color=always
+      -Dmaven.repo.local=${CI_PROJECT_DIR}/${REPOSITORY_PATH}
+      -Dmaven.test.skip=true
+  script:
+    - spotbugs.sh
+  cache:
+    - key: ${BUILD_TOOL}
+      when: always
+      paths:
+        - ${REPOSITORY_PATH}
+  artifacts:
+    when: always
+    paths:
+      - ${REPORTS_PATH}
+  rules:
+    - if: >
+        $REPOSITORY_LANGUAGE == "java" &&
+        $CI_PIPELINE_TRIGGERED != "true"

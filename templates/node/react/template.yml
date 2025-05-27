@@ -1,0 +1,10 @@
+---
+variables:
+  BUILD_TOOL: 'yarn'
+  NODE_FRAMEWORK: 'react'
+  OUTPUT_DIR: 'build'
+  REPOSITORY_LANGUAGE: 'typescript'
+
+build-artifacts:
+  script:
+    - react-build.sh || echo $?

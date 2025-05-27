@@ -1,0 +1,34 @@
+PATH=$PATH:/usr/vac/bin
+
+ANFITRION=$WORK_DIR;export ANFITRION
+OUTPUT_DIR=bin;export OUTPUT_DIR
+
+CC="cc -qstaticinline -qrtti=all -q64 -D_LARGE_FILES -D__XCOFF32__ -D__XCOFF64__";export CC
+
+# set -o vi
+
+##########################################################
+# Tuxedo 10gR3                                           #
+##########################################################
+TUXDIR=/u11/home/app/oracleprod/tuxedo10gR3; export TUXDIR
+JAVA_HOME=$TUXDIR/jre; export JAVA_HOME
+JVMLIBS=$JAVA_HOME/jre/bin/j9vm:$JAVA_HOME/jre/bin
+PATH=$TUXDIR/bin:$JAVA_HOME/bin:$PATH; export PATH
+COBCPY=:$TUXDIR/cobinclude; export COBCPY
+COBOPT="-C ANS85 -C ALIGN=8 -C NOIBMCOMP -C TRUNC=ANSI -C OSEXT=cbl"; export COBOPT
+SHLIB_PATH=$TUXDIR/lib:$JVMLIBS:$SHLIB_PATH; export SHLIB_PATH
+LIBPATH=$TUXDIR/lib:$JVMLIBS:$LIBPATH; export LIBPATH
+LD_LIBRARY_PATH=$TUXDIR/lib:$JVMLIBS:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+WEBJAVADIR=$TUXDIR/udataobj/webgui/java; export WEBJAVADIR
+
+##########################################################
+# Oracle 11gR2                                           #
+##########################################################
+ORACLE_HOME=/u13/app/oracle/product/11.2.0/client_1; export ORACLE_HOME
+PATH=$PATH:$ORACLE_HOME/bin
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib; export LD_LIBRARY_PATH
+SHLIB_PATH=$SHLIB_PATH:$ORACLE_HOME/bin; export SHLIB_PATH
+LIBPATH=$LIBPATH:$ORACLE_HOME/bin; export LIBPATH
+
+# NLS_LANG=en_us.utf8;export NLS_LANG
+NLS_LANG=spanish_spain.we8iso8859p9;export NLS_LANG

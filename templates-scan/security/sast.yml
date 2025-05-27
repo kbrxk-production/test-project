@@ -1,0 +1,30 @@
+---
+include:
+  - project: 'tech-corp/seguridad-de-la-informacion/ci-templates/falabella-sast'
+    file: '/template/.checkmarx-template.yml'
+
+  - project: 'tech-corp/seguridad-de-la-informacion/ci-templates/falabella-sast'
+    file: '/template/.ci-template.yml'
+
+.sast-secaas:
+  interruptible: true
+  stage: security
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure: true
+  variables:
+    CI_DEBUG_TRACE: 'false'
+    CX_PROJECT: 'BANCO-on-demand'
+    SCAN_KUBERNETES_MANIFESTS: 'true'
+    SAST_JAVA_VERSION: $JDK_VERSION
+    SECAAS_REGISTRY_BASE_URL: 'gcr.io/gsc-gitlab-ce/cicd/secaas/base'
+  tags: ["gitlab-shared-runners", "docker"]
+  rules:
+    - if: $SKIP_CHECKMARX == "true"
+      when: never
+    - if: >
+        ($IS_DYNAMIC_JOB != "true")
+      when: always

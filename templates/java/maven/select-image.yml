@@ -1,0 +1,34 @@
+spec:
+  inputs:
+    jdk-version:
+      options:
+        - '11'
+        - '17'
+        - '21'
+        - 'oraclejdk11'
+---
+include:
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'maven:3-openjdk-11-slim'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "11"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'maven:3-jdk-11'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "oraclejdk11"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'maven:3-openjdk-17-slim'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "17"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'maven:3-openjdk-21-slim'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "21"

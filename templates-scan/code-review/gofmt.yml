@@ -1,0 +1,22 @@
+---
+gofmt:
+  interruptible: true
+  stage: code-review
+  image:
+    name: cytopia/gofmt:latest
+    entrypoint: ["/bin/sh", "-c"]
+  needs:
+    - job: validate
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - |
+      # Ejecutando gofmt
+      echo -e "${GREEN}$ gofmt -d .${NORMAL}"
+      /docker-entrypoint.sh --ci . ||
+      echo -e "${RED}Se encontraron errores de formato\n\n\
+               Ejecute ${BLUE}\"gofmt -w .\"${RED} para corregir${NORMAL}"
+  rules:
+    - if: '$REPOSITORY_LANGUAGE == "golang" && $CI_PIPELINE_TRIGGERED != "true"'
+      when: always

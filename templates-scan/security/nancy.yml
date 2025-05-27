@@ -1,0 +1,14 @@
+---
+nancy:
+  interruptible: true
+  stage: security
+  needs:
+    - job: validate
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - nancy.sh || exit $?
+  rules:
+    - if: '$REPOSITORY_LANGUAGE == "golang" && $CI_PIPELINE_TRIGGERED != "true"'
+      when: always

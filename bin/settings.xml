@@ -1,0 +1,64 @@
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
+    xmlns="http://maven.apache.org/SETTINGS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <servers>
+    <!--server>
+      <id>gitlab</id>
+      <configuration>
+        <httpHeaders>
+          <property>
+            <name>Private-Token</name>
+            <value>$${GITLAB_ACCESS_TOKEN2}</value>
+          </property>
+        </httpHeaders>
+      </configuration>
+    </server-->
+    <server>
+      <id>gitlab</id>
+      <username>${env.ARTIFACT_REPOSITORY_USER}</username>
+      <password>${env.ARTIFACT_REPOSITORY_PASS}</password>
+    </server>
+    <!--server>
+      <id>releases</id>
+      <username>$${env.ARTIFACT_REPOSITORY_USER}</username>
+      <password>$${env.ARTIFACT_REPOSITORY_PASS}</password>
+    </server-->
+    <server>
+      <id>oracle</id>
+      <username>${env.ARTIFACT_REPOSITORY_USER}</username>
+      <password>${env.ARTIFACT_REPOSITORY_PASS}</password>
+      <configuration>
+        <basicAuthScope>
+          <host>ANY</host>
+          <port>ANY</port>
+          <realm>OAM 11g</realm>
+        </basicAuthScope>
+        <httpConfiguration>
+          <all>
+            <params>
+              <property>
+                <name>http.protocol.allow-circular-redirects</name>
+                <value>%b,true</value>
+              </property>
+            </params>
+          </all>
+        </httpConfiguration>
+      </configuration>
+    </server>
+    <server>
+      <id>proget</id>
+      <username>${env.ARTIFACT_REPOSITORY_USER}</username>
+      <password>${env.ARTIFACT_REPOSITORY_PASS}</password>
+      <configuration>
+        <timeout>240000</timeout>
+      </configuration>
+    </server>
+  </servers>
+  <!-- <mirrors>
+    <mirror>
+      <id>proget</id>
+      <mirrorOf>*</mirrorOf>
+      <url>${env.MAVEN_REPOSITORY}</url>
+      <name>proget</name>
+    </mirror>
+  </mirrors> -->
+</settings>

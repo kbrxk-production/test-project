@@ -1,0 +1,18 @@
+---
+sqlcheck:
+  extends: .code-review
+  stage: 📋 code-review
+  image: node:18
+  needs:
+    - job: init
+      optional: true
+    - job: export-sql
+      optional: true
+  allow_failure: true
+  script:
+    - sqlcheck.sh
+  rules:
+    - if: >
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        $DATABASE_VENDOR == "mariadb"

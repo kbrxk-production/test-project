@@ -1,0 +1,19 @@
+spec:
+  inputs:
+    dbms-vendor:
+      default: ''
+---
+variables:
+  REPOSITORY_LANGUAGE: mongodb
+  DATABASE_VENDOR: mongodb
+  MONGO_INITDB_ROOT_USERNAME: username
+  MONGO_INITDB_ROOT_PASSWORD: 1234
+
+test:
+  services:
+    - name: mongo:latest
+      alias: mongodb
+  variables:
+    DATABASE_NAME: mongodb
+    DB_CONNECTION_STRING: >
+      mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${DATABASE_NAME}:27017?authSource=admin

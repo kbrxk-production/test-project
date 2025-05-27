@@ -1,0 +1,103 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+    python-version:
+---
+include:
+  - local: templates/python/select-image.yml
+    inputs:
+      python-version: '$[[ inputs.python-version ]]'
+
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+variables:
+  OUTPUT_DIR: 'dist'
+  TESTS_PATH_REGEX: '**/test/'
+  ARTIFACT_PATH: ${OUTPUT_DIR}
+  BUILD_TOOL: 'python3'
+  PYTHON_VERSION: $[[ inputs.python-version ]]
+  PACKAGING: 'tar.gz'
+  REPOSITORY_LANGUAGE: 'python'
+  REPOSITORY_PATH: 'cache'
+  FORCE_COLOR: 1
+  SNAPSHOT_REPOSITORY: pypi-snapshots
+  STABLE_REPOSITORY: pypi-releases
+  PIP_CACHE_DIR: '${REPOSITORY_PATH}/pip'
+  COVERAGE_EXCLUSIONS: 'tests/**/*'
+
+.workflow-extras:
+  rules:
+    - exists:
+        - pyproject.toml
+      variables:
+        SKIP_BUILD: 'false'
+      when: always
+    - variables:
+        ARTIFACT_PATH: '.'
+      when: always
+
+validate:
+  variables:
+    get_group_name: 'awk -F'' *= *''  ''/^authors *=/ {print $$2}'' pyproject.toml|sed ''s|"||g'''
+    get_name: 'awk -F'' *= *''  ''/^name *=/ {print $$2}'' pyproject.toml|sed ''s|"||g'''
+    get_version: 'awk -F'' *= *''  ''/^version *=/ {print $$2}'' pyproject.toml|sed ''s|"||g'''
+
+build-artifacts:
+  script:
+    - |
+      # Listing Requirements:
+      pip install --quiet --no-cache-dir --upgrade build twine pytest-cov poetry pip
+      python -m venv build-env
+      source build-env/bin/activate
+      [[ -f setup.py ]] && echo "${RED}Elimine archivo setup.py${NORMAL}" && exit 1
+      if [[ ${CI_COMMIT_REF_NAME} =~ ^renovate/ ]]; then
+        poetry lock
+        echo -e "${BLUE}poetry.lock${NORMAL}"
+        cat poetry.lock
+      fi
+      poetry show
+    - poetry check
+    - |
+      XDG_CACHE_HOME=${PIP_CACHE_DIR} poetry build
+
+      # if [[ "${DEPLOYABLE}" == "true" ]]; then
+      #   echo -e "${GREEN}# Publicando artefactos${NORMAL}"
+      # cat > ~/.pypirc << EOF
+      # [distutils]
+      # index-servers =
+      #     nexus
+
+      # [nexus]
+      # repository: ${NEXUS_URL}/repository/${SNAPSHOT_REPOSITORY}/
+      # username: ${NEXUS_REPO_USER}
+      # password: ${NEXUS_REPO_PASS}
+      # EOF
+      #   twine upload --repository nexus --cert /tmp/nexus.pem dist/*
+      # fi
+  artifacts:
+    paths:
+      - ${FINAL_NAME}
+      - ${REPOSITORY_PATH}
+  # rules:
+  #   - if: $CI_COMMIT_BRANCH != "" && $FULL_PIPELINE == "true"
+  #     exists:
+  #       - pyproject.toml
+
+.tests:
+  script:
+    - "[[ -d tests ]] || exit 127"
+    - python-test.sh
+
+tests:unit:
+  variables:
+    TEST_PATH: tests/unit
+
+tests:integration:
+  variables:
+    TEST_PATH: tests/integration

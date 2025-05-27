@@ -1,0 +1,23 @@
+add_badge() {
+  BADGE_NAME=$1
+  BADGE_LINK=$2
+  BADGE_IMAGE=$3
+  BADGE_ID=$(curl -k -s --header "PRIVATE-TOKEN: ${GITLAB_ACCESS_TOKEN_API}" -X GET \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/badges" |
+        jq -r --arg BADGE_NAME "${BADGE_NAME}" '.[] | select(.name==$BADGE_NAME).id' | head -1)
+  if [ "${BADGE_ID}" = "" ]; then
+    printf "%s# Adding %s Badge%s\n" "${GREEN}" "${BADGE_NAME}" "${NORMAL}"
+    curl -s --header "PRIVATE-TOKEN: ${GITLAB_ACCESS_TOKEN_API}" -X POST \
+         --data "name=${BADGE_NAME}" \
+         --data-urlencode "link_url=${BADGE_LINK}" \
+         --data-urlencode "image_url=${BADGE_IMAGE}" \
+         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/badges" > /dev/null
+  else
+    printf "%s# Update %s Badge%s\n" "${GREEN}" "${BADGE_NAME}" "${NORMAL}"
+    curl -l -s --header "PRIVATE-TOKEN: ${GITLAB_ACCESS_TOKEN_API}" -X PUT \
+         --data "name=${BADGE_NAME}" \
+         --data-urlencode "link_url=${BADGE_LINK}" \
+         --data-urlencode "image_url=${BADGE_IMAGE}" \
+         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/badges/${BADGE_ID}" > /dev/null
+  fi
+}

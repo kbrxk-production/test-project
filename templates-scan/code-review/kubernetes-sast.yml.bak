@@ -1,0 +1,63 @@
+include:
+  - template: liquibase.gitlab-ci.yml
+
+stages:
+  - 💣 destroy
+  - 🏗 build
+  - 📝 plan
+  - 📝 test
+  - 🚚 release
+  - 🚀 deploy
+  - 🔍 code-review
+  - 📋 code-review
+
+.functions: &functions |
+  function isUpToDate(){
+    status=$(liquibase status --verbose --changelog-file src/dbchangelog.xml --url)
+    if [[ $status == *'is up to date'* ]]; then
+      echo "database is already up to date" & exit 0
+    fi;
+  }
+
+  function isRollback(){
+    if [ -z "$ROLLBACK_TAG" ]; then
+      echo "No ROLLBACK_TAG provided, running any pending changes"
+    elif [[ "$(liquibase rollbackSQL $ROLLBACK_TAG)" ]]; then
+      liquibase --logLevel=info --logFile=${CI_JOB_NAME}_${CI_PIPELINE_ID}.log rollback $ROLLBACK_TAG && exit 0
+    else exit 0
+    fi;
+  }
+
+.liquibase_job:
+  before_script:
+    - liquibase --version
+    - *functions
+    - isRollback
+    - isUpToDate
+    - liquibase checks run
+    - liquibase update
+    - liquibase rollbackOneUpdate --force      # This is a Pro command. Try Pro free trial here - https://liquibase.org/try-liquibase-pro-free
+    - liquibase tag $CI_PIPELINE_ID
+    - liquibase --logFile=${CI_JOB_NAME}_${CI_PIPELINE_ID}.log --logLevel=info update
+    - liquibase history
+  rules:
+    - if: $CI_PROJECT_NAME == "hipotecario-simulador-database"
+
+build-job:
+  stage: .pre
+
+test-job:
+  stage: .pre
+
+deploy-prod:
+  stage: .pre
+
+DEV->TEST:
+  stage: .pre
+  rules:
+    - when: never
+
+TEST->PROD:
+  stage: .pre
+  rules:
+    - when: never

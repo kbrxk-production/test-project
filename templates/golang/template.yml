@@ -1,0 +1,53 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+    go-version:
+---
+include:
+  - local: templates/golang/select-image.yml
+    inputs:
+      go-version: '$[[ inputs.go-version ]]'
+
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+variables:
+  BUILD_TOOL: 'go'
+  SKIP_BUILD: 'false'
+  REPOSITORY_LANGUAGE: 'golang'
+  OUTPUT_DIR: 'bin'
+  TESTS_PATH_REGEX: './'
+  REPOSITORY_PATH: 'vendor'
+  ARTIFACT_PATH: ${OUTPUT_DIR}
+  PACKAGING: 'tar.gz'
+  SNAPSHOT_REPOSITORY: go-snapshots
+  STABLE_REPOSITORY: go-releases
+
+validate:
+  variables:
+    get_group_name: 'go list -m -mod=readonly | sed "s|\/[^\/]*$||g"'
+    get_name: 'go list -m -mod=readonly | sed "s|.*\/||g"'
+    get_version: 'sed -n "s/^VERSION[ \t]*:=[ \t]*//p" Makefile'
+
+build-artifacts:
+  variables:
+    CGO_ENABLED: 0
+    GOOS: linux
+    GOARCH: amd64
+  script:
+    - golang-build.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH != "" && $FULL_PIPELINE == "true"
+      exists:
+        - go.mod
+
+tests:unit:
+  script:
+    - golang-test.sh || exit $?
+  allow_failure:
+    exit_codes: 127

@@ -1,0 +1,66 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+    jdk-compiler:
+      options:
+        - maven
+        - gradle
+        - ant
+    jdk-version:
+      default: ''
+    jdk-packaging:
+      default: 'jar'
+    jdk-framework:
+      default: ''
+    maven-multimodule:
+      type: string
+      default: 'false'
+---
+include:
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+  # Maven
+  - local: templates/java/maven/template.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+      jdk-packaging: '$[[ inputs.jdk-packaging ]]'
+      jdk-framework: '$[[ inputs.jdk-framework ]]'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-compiler ]]" == "maven" &&
+          "$[[ inputs.maven-multimodule ]]" == "false"
+
+  - local: templates/java/maven/multimodule.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+      jdk-packaging: '$[[ inputs.jdk-packaging ]]'
+      jdk-framework: '$[[ inputs.jdk-framework ]]'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-compiler ]]" == "maven" &&
+          "$[[ inputs.maven-multimodule ]]" == "true"
+
+  # Gradle
+  - local: templates/java/gradle/template.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+      jdk-packaging: '$[[ inputs.jdk-packaging ]]'
+      jdk-framework: '$[[ inputs.jdk-framework ]]'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-compiler ]]" == "gradle"
+
+  # Ant
+  - local: templates/java/ant/template.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+      jdk-packaging: '$[[ inputs.jdk-packaging ]]'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-compiler ]]" == "ant"

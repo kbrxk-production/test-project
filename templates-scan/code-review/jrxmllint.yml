@@ -1,0 +1,21 @@
+---
+jrxmllint:
+  interruptible: true
+  stage: code-review
+  image:
+    name: registry.gitlab.com/pipeline-components/xmllint:latest
+    entrypoint: [""]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - jrxmllint.sh || exit $?
+  rules:
+    - exists:
+        - '**/*.jrxml'
+      when: always

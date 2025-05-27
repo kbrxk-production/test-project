@@ -1,0 +1,26 @@
+---
+cppcheck:
+  extends: .common-code-review
+  interruptible: true
+  stage: code-review
+  image:
+    name: alpine:latest
+    entrypoint: ["/bin/sh", "-c"]
+  needs:
+    - job: validate
+  script:
+    - |
+      FILE_LOCATION=fif/banco-falabella/devops/ci-cd/code-review-pipeline/-/raw/main/bin/cppcheck.sh || exit $?
+      mkdir -p ${HOME}/bin
+      wget -O ${HOME}/bin/cppcheck.sh https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${FILE_LOCATION}
+      sh ${HOME}/bin/cppcheck.sh || exit $?
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - exists:
+        - '**/*.c'
+      when: always
+  allow_failure:
+    exit_codes: 127

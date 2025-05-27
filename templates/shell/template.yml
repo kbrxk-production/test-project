@@ -1,0 +1,37 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+---
+include:
+  - local: templates/common/template.yml
+
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+variables:
+  REPOSITORY_LANGUAGE: 'shell'
+  OUTPUT_DIR: 'dist'
+  SKIP_BUILD: 'false'
+  PACKAGING: 'tar.gz'
+  ARTIFACT_PATH: ${OUTPUT_DIR}
+
+validate:
+  variables:
+    get_group_name: 'echo "unknown"'
+    get_name: 'echo ${CI_PROJECT_NAME}'
+    get_version: 'cat VERSION'
+
+build-artifacts:
+  script:
+    - shell-build.sh
+  artifacts:
+    expire_in: 1 day
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    paths:
+      - ${ARTIFACT_PATH}

@@ -1,0 +1,44 @@
+---
+include:
+  - project: 'fif/dx/gitlab-templates/security/trivy'
+    ref: dependencies-test
+    file:
+      - '/template/ci-template.yml'
+
+container_scanning:
+  rules:
+    - when: never
+
+trivy:
+  extends: container_scanning
+  interruptible: true
+  stage: security
+  tags: ["gitlab-shared-runners", "docker"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+    - job: build-image
+      optional: true
+  variables:
+    COLLECTOR_CONTAINER_IMAGE: "gcr.io/gsc-gitlab-ce/cicd/secaas/base/bq-collector-scanning-image:6.2"
+    SECAAS_PLUGIN_KEY: $SECAAS_PLUGIN_KEY
+    BUSINESS_ID: $BUSINESS_ID
+    CS_QUIET : ""
+    GIT_STRATEGY: fetch
+    SECAAS_REGISTRY_BASE_URL: 'gcr.io/gsc-gitlab-ce/cicd/secaas/base'
+    SERVERMODE: "-s"
+    COLLECTOR_DATASET: compliance_cicd
+    COLLECTOR_TABLE: trivy_report
+    COLLECTOR_CONTAINER_IMAGE: ${SECAAS_REGISTRY_BASE_URL}/bq-collector-scanning-image:6.2
+  script:
+    - !reference [.code-review, before_script]
+    - trivy.sh || exit $?
+  allow_failure:
+    exit_codes: 127
+  rules:
+    - if: '$CI_COMMIT_BRANCH == ""'
+      when: never
+    - exists:
+        - Dockerfile

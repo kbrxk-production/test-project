@@ -1,0 +1,26 @@
+---
+safety:
+  interruptible: true
+  stage: code-review
+  image:
+    name: pyupio/safety
+    entrypoint: [""]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - |
+      # Checking dependencies:
+      find * \( -name "requirements.txt" -o -name "pyproject.toml" \) |
+        xargs cat |
+        safety check --stdin ||
+      exit 127
+  rules:
+    - if: >
+        $REPOSITORY_LANGUAGE =~ /(python)/ &&
+        $CI_PIPELINE_TRIGGERED != "true"
+      when: always

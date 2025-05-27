@@ -1,0 +1,106 @@
+---
+variables:
+  SONAR_USER_HOME: ".sonar"
+
+sonarqube:
+  interruptible: true
+  stage: code-review
+  image:
+    name: gcr.io/bfa-cl-developenvironment-dev/staging/devops/sonarqube-scanner-cli:latest
+    docker:
+      user: root
+  tags: ["gl-runner-build"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+      artifacts: true
+    - job: build-artifacts
+      optional: true
+    - job: export-sql
+      optional: true
+    - job: tests:unit
+      optional: true
+    - job: tests:integration
+      optional: true
+    - job: angular-lint
+      optional: true
+    - job: ansible-lint
+      optional: true
+    - job: checkov
+      optional: true
+    - job: checkstyle
+      optional: true
+    - job: dependency-check-v2
+      optional: true
+    - job: golangci-lint
+      optional: true
+    - job: gosec
+      optional: true
+    - job: govet
+      optional: true
+    - job: hadolint
+      optional: true
+    - job: markdown-lint
+      optional: true
+    - job: nodejs-scan
+      optional: true
+    - job: pmd
+      optional: true
+    - job: pycodestyle
+      optional: true
+    - job: python-lint
+      optional: true
+    - job: spotbugs-sast
+      optional: true
+    - job: tflint
+      optional: true
+    - job: yamllint
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  variables:
+    SONAR_PROJECT_BASE_DIR: ${CI_PROJECT_DIR}
+    SONAR_PROJECT_KEY: "${CI_PROJECT_NAME}-${CI_PROJECT_ID}"
+    SONAR_PROJECT_NAME: "${CI_PROJECT_TITLE}"
+    JAVA_LIBRARIES: ${CI_PROJECT_DIR}/${REPOSITORY_PATH}
+    APPLICATION: "${BUSINESS_SERVICE_NAME}-service"
+    PORTFOLIO: "${BUSINESS_SERVICE_NAME}-portfolio"
+    GROUP: "${BUSINESS_SERVICE_NAME}-group"
+    VISIBILITY: private
+    DEFAULT_BRANCH: main
+    SOURCE_ENCODING: "UTF-8"
+    LOG_LEVEL: "WARN"
+    QUALITY_GATE_ENABLED: "1"
+    BRANCH_PLUGIN_ENABLED: "1"
+    COVERAGE_REPORT_PATH: "${SONAR_USER_HOME}/coverage-reports/*coverage-*.xml"
+  script:
+    - !reference [.code-review, before_script]
+    - sonarqube.sh || exit $?
+  cache:
+    - key: ${BUILD_TOOL}
+      paths:
+        - .npm
+        - ${REPOSITORY_PATH}
+      policy: pull
+    - key: "${CI_JOB_NAME}"
+      paths:
+        - .sonar/cache
+  artifacts:
+    expire_in: 1 day
+    reports:
+      sast: gl-sast-sonar-report.json
+  rules:
+    - if: $SKIP_SONAR == "true" || $FULL_PIPELINE == "false"
+      when: never
+    # - if: >
+    #     ($CI_COMMIT_BRANCH == "" && $CI_PIPELINE_SOURCE != "merge_request_event") ||
+    #     $IS_DYNAMIC_JOB == "true" ||
+    #     $SKIP_SONAR == "true"
+    #   when: never
+    - if: $BUILD_TOOL =~ /(^node$|^yarn$|^nest$)/
+      when: delayed
+      start_in: 30 seconds
+    - if: >
+        $IS_DYNAMIC_JOB != "true"

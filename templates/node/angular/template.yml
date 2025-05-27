@@ -1,0 +1,18 @@
+---
+variables:
+  ARTIFACT_PATH: '.'
+  OUTPUT_DIR: 'dist'
+  TESTS_PATH_REGEX: 'src/'
+  REPOSITORY_LANGUAGE: 'typescript'
+  NODE_FRAMEWORK: 'angular'
+  BUILD_TOOL: 'angular'
+  SNAPSHOT_REPOSITORY: angular-snapshots
+  STABLE_REPOSITORY: angular-releases
+
+build-artifacts:
+  script:
+    - angular-build.sh || exit $?
+
+tests:unit:
+  script:
+    - angular-test.sh

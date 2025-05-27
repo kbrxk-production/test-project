@@ -1,0 +1,41 @@
+---
+include:
+  - template: Code-Quality.gitlab-ci.yml
+
+code_quality:
+  stage: 📋 code-review
+  needs:
+    - job: init
+      optional: true
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  rules:
+    - if: '$CODE_QUALITY_DISABLED'
+      when: never
+    - if: >
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true"
+
+#   image:
+#     name: plone/code-quality
+#     entrypoint: [""]
+#   allow_failure: true
+#   script:
+#     - |
+#       # Starting code-quality checks:
+#       cat >> pyproject.toml << EOF
+
+#       [tool.flakeheaven]
+#       max_line_length=120
+#       EOF
+
+#       pip install --quiet --upgrade pip poetry
+#       echo ${PWD}
+#     - /docker-entrypoint.py check | sed -e "s|builds|sdsdsdasd|g"
+#   rules:
+#     - if: >
+#         $REPOSITORY_LANGUAGE =~ /(python)/ &&
+#         $CI_PIPELINE_TRIGGERED != "true" &&
+#         $IS_DYNAMIC_JOB != "true"

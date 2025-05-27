@@ -1,0 +1,22 @@
+---
+convco:
+  interruptible: true
+  stage: code-review
+  image:
+    name: convco/convco:latest
+    entrypoint: ["/bin/sh", "-c"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - |
+      FILE_LOCATION=fif/banco-falabella/devops/ci-cd/code-review-pipeline/-/raw/main/bin/convco.sh || exit $?
+      wget -q -O ${HOME}/convco.sh https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${FILE_LOCATION}
+      sh ${HOME}/convco.sh || exit $?
+  rules:
+    - if: '$IS_DYNAMIC_JOB != "true"'
+      when: always

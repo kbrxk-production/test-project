@@ -1,0 +1,41 @@
+---
+pgformatter:
+  interruptible: true
+  stage: code-review
+  image:
+    name: backplane/pgformatter
+    entrypoint: ["/bin/sh",  "-c", '/bin/bash -c "$@"']
+  needs:
+    - job: validate
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - |
+      cat > /tmp/wget.pl << EOF
+      use strict;
+      use warnings;
+      use HTTP::Tiny;
+
+      my \$url = \$ARGV[0];
+      my \$response = HTTP::Tiny->new->get(\$url);
+      if (\$response->{success}) {
+          my \$html = \$response->{content};
+          print(\$html);
+      }
+      EOF
+      mkdir ${HOME}/bin
+
+      FILE_LOCATION=fif/banco-falabella/devops/ci-cd/code-review-pipeline/-/raw/main/bin/pgformatter.sh
+      perl /tmp/wget.pl "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${FILE_LOCATION}" > ${HOME}/bin/pgformatter.sh
+      FILE_LOCATION=fif/banco-falabella/devops/ci-cd/code-review-pipeline/-/raw/main/bin/.pg_format
+      perl /tmp/wget.pl "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${FILE_LOCATION}" > .pg_format
+
+      chmod +x ${HOME}/bin/pgformatter.sh
+      ${HOME}/bin/pgformatter.sh || exit $?
+  rules:
+    - if: >
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        $DATABASE_VENDOR == "postgres"
+      when: always

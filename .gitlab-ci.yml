@@ -1,0 +1,7 @@
+---
+include:
+  - component: $CICD_BUILD_COMPONENT/java@1.0.0
+    inputs:
+      jdk-compiler: 'maven'
+      jdk-version: '21'
+      deployment-platform: 'kubernetes'

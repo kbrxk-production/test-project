@@ -1,0 +1,255 @@
+spec:
+  inputs:
+    compiler-image:
+      description: 'Imagen usada para la compilacion del codigo fuente'
+      default: 'debian:latest'
+---
+include:
+  - component: gitlab.com/devops/ci-cd/code-review-pipeline/code-review@main
+
+stages:
+  - destroy
+  - build
+  - plan
+  - test
+  - release
+  - deploy
+  - security
+  - code-review
+
+variables:
+  TZ: America/Santiago
+  ESC: "\e"
+  RED: "$ESC[91m"
+  GREEN: "$ESC[92m"
+  YELLOW: "$ESC[93m"
+  BLUE: "$ESC[94m"
+  NORMAL: "$ESC[0m"
+  GIT_DEPTH: 0
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_CLONE_PATH:
+  TRANSFER_METER_FREQUENCY: '1s'
+  RUNNER_GENERATE_ARTIFACTS_METADATA: 'true'
+  RESTORE_CACHE_ATTEMPTS: 10
+  DEPLOYABLE: "false"
+  PACKAGE_NAME_VALIDATION: "true"
+  SKIP_BUILD: "true"
+  SKIP_IMAGE: "true"
+  SKIP_CHECKS: "false"
+  FULL_PIPELINE:
+    value: 'true'
+    description: 'Ejecución completa del pipeline'
+
+image:
+  name: $[[ inputs.compiler-image ]]
+
+default:
+  tags:
+    - ${GITLAB_RUNNER}
+
+.this-is-draft-merge-request:
+  never:
+    - if: '$CI_MERGE_REQUEST_TITLE =~ /(^Draft: )/'
+      when: never
+
+.there-are-open-merge-requests:
+  never:
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+
+.is-deployable-production:
+  always:
+    - if: >
+        $CI_COMMIT_BRANCH =~ /(^master$|^main$)/ &&
+        $CI_COMMIT_REF_PROTECTED == "true"
+      variables:
+        DEPLOYABLE: "true"
+
+.is-deployable-staging:
+  always:
+    - if: >
+        ($CI_PIPELINE_SOURCE == "merge_request_event" ||
+         $CI_COMMIT_TAG =~ /(^v[0-9]+.[0-9]+.[0-9]+)/ ||
+         $CI_COMMIT_BRANCH =~ /(^hotfix\/|^release\/|^feature\/|^revert-)/)
+      variables:
+        DEPLOYABLE: "true"
+
+.workflow-extras:
+  rules:
+    - when: always
+
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+  rules:
+    - if: >
+        $CI_COMMIT_TAG &&
+        $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - !reference [.this-is-draft-merge-request, never]
+    - !reference [.there-are-open-merge-requests, never]
+    - !reference [.workflow-extras, rules]
+
+.clone-pipeline-repository:
+  script:
+    - |
+      # Download pipeline repository
+      if command -v git &> /dev/null; then
+        branch=main
+        [ -n "${COMMON_BUILD_BRANCH}" ] && branch=${COMMON_BUILD_BRANCH}
+        git clone --branch $branch ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CICD_BUILD_COMPONENT}.git \
+          /tmp/build-pipeline
+        mv /tmp/build-pipeline/bin/* /usr/local/bin
+      else
+        printf "${YELLOW}ERROR: No se encuentra commando git${NORMAL}\n"
+      fi
+
+.install-git:
+  script:
+    - |
+      if [[ -f /etc/alpine-release ]]; then
+        echo "Sistema operativo detectado: Alpine"
+        apk add --no-cache ${PACKAGES} > /tmp/apk.log 2>&1 || cat /tmp/apk.log
+      elif [[ -f /etc/debian_version ]]; then
+        echo "Sistema operativo detectado: Debian"
+        apt -qq update > /tmp/apt.log 2>&1 || cat /tmp/apt.log
+        apt -qq install -y ${PACKAGES} > /tmp/apt.log 2>&1 || cat /tmp/apt.log
+      elif [[ -f /etc/redhat-release || -f centos-release ]]; then
+        echo "Sistema operativo detectado: Redhat/Centos"
+        yum -y install ${PACKAGES} > /tmp/apt.log 2>&1 || cat /tmp/apt.log
+      else
+        echo "Sistema operativo no reconocido"
+      fi
+
+validate:
+  interruptible: true
+  stage: .pre
+  script:
+    - |
+      set -e
+      PACKAGES="jq curl git"
+    - !reference [.install-git, script]
+    - !reference [.clone-pipeline-repository, script]
+    - validate.sh || exit $?
+  artifacts:
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    reports:
+      dotenv: build.env
+  cache:
+    - key: ${BUILD_TOOL}
+      paths:
+        - ${REPOSITORY_PATH}
+  coverage: '/| *Coverage *| *(\d+\.\d+)%/'
+  allow_failure:
+    exit_codes: 127
+  rules:
+    - !reference [.is-deployable-production, always]
+    - !reference [.is-deployable-staging, always]
+    - when: always
+
+build-artifacts:
+  interruptible: true
+  stage: build
+  needs:
+    - job: validate
+  before_script:
+    - |
+      set -e
+      PACKAGES="git curl"
+    - !reference [.install-git, script]
+    - !reference [.clone-pipeline-repository, script]
+    # - |
+    #   [[ "${REPOSITORY_LANGUAGE}" == "python" && "${ORACLE}" == "true" ]] &&
+    #     wget -q https://download.oracle.com/otn_software/linux/instantclient/216000/instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip \
+    #          -O instantclient.zip
+  script:
+    - echo "Script no definido" && exit 1
+  cache:
+    - key: ${BUILD_TOOL}
+      paths:
+        - ${REPOSITORY_PATH}
+  artifacts:
+    expire_in: 1 day
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    paths:
+      - ${OUTPUT_DIR}
+  rules:
+    - if: >
+        $CI_COMMIT_BRANCH != "" &&
+        $FULL_PIPELINE == "true" &&
+        $SKIP_BUILD == "false" &&
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true"
+
+# TODO: Descargar artefacto de artifactory
+
+build-image:
+  interruptible: true
+  stage: build
+  image:
+    name: docker
+    entrypoint: ["/bin/sh", "-c"]
+  needs:
+    - job: validate
+    - job: build-artifacts
+      optional: true
+  variables:
+    DOCKER_FILE: 'Dockerfile'
+    INSTANTCLIENT_URL: https://download.oracle.com/otn_software/linux/instantclient/216000/instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip
+  script:
+    - !reference [.clone-pipeline-repository, script]
+    - image-build.sh
+  cache:
+    - key: ${BUILD_TOOL}
+      paths:
+        - ${REPOSITORY_PATH}
+  rules:
+    - if: >
+        $CI_COMMIT_BRANCH != "" &&
+        $FULL_PIPELINE == "true" &&
+        $CI_PIPELINE_TRIGGERED != "true"
+      exists:
+        - Dockerfile
+
+.tests:
+  stage: test
+  extends: build-artifacts
+  script:
+    - ":"
+  cache:
+    - key: ${BUILD_TOOL}
+      paths:
+        - ${REPOSITORY_PATH}
+  artifacts:
+    when: always
+    paths:
+      - .sonar
+  allow_failure:
+    exit_codes: 127
+
+tests:unit:
+  interruptible: true
+  extends: .tests
+  rules:
+    - if: >
+        $CI_COMMIT_BRANCH != "" &&
+        $FULL_PIPELINE == "true" &&
+        $REPOSITORY_LANGUAGE &&
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        $SKIP_TESTS != "true"
+      when: always
+
+tests:integration:
+  interruptible: true
+  extends: .tests
+  rules:
+    - when: never
+
+test:
+  interruptible: true
+  extends: .tests
+  rules:
+    - when: never

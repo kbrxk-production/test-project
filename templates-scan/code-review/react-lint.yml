@@ -1,0 +1,47 @@
+---
+.eslintrc:
+  extends: .common-code-review
+  variables:
+    ESLINTRC_FILE: |
+      {
+      }
+
+react-lint:
+  extends:
+    - .eslintrc
+  interruptible: true
+  stage: code-review
+  needs:
+    - job: validate
+    - job: build-artifacts
+      optional: true
+  dependencies: []
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - |
+      node -v
+      (apt -qq update && apt -qq install -y jq) > /dev/null 2>&1
+      cat > .eslintrc.json << EOF
+      ${ESLINTRC_FILE}
+      EOF
+      [[ "${LOG_LEVEL}" == "DEBUG" ]] && echo -e "${BLUE}.eslintrc.json:${NORMAL}" && cat .eslintrc.json
+      npm config set cache .npm
+      npm install --silent -g eslint eslint-plugin-react
+      npm install --silent eslint-plugin-eslint-plugin@latest --save-dev
+    - |
+      eslint .
+  cache:
+    - key: node
+      paths:
+        - .npm
+        - ${REPOSITORY_PATH}
+      policy: pull
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - if: $REPOSITORY_LANGUAGE == "react" && $CI_PIPELINE_TRIGGERED != "true"
+      when: always

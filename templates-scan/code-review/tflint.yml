@@ -1,0 +1,29 @@
+---
+tflint:
+  extends: .common-code-review
+  interruptible: true
+  stage: code-review
+  image:
+    name: ghcr.io/terraform-linters/tflint:latest
+    entrypoint: [""]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+    - job: plan
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  variables:
+    TFLINT_LOG: ${LOG_LEVEL}
+  script:
+    - !reference [.code-review, before_script]
+    - tflint.sh || exit $?
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - if: "$REPOSITORY_LANGUAGE =~ /(terraform)/"
+      when: always

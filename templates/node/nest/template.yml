@@ -1,0 +1,9 @@
+---
+variables:
+  BUILD_TOOL: 'nest'
+  OUTPUT_DIR: 'dist'
+  REPOSITORY_LANGUAGE: 'typescript'
+
+build-artifacts:
+  script:
+    - node-build.sh || echo $?

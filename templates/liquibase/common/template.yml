@@ -1,0 +1,68 @@
+---
+variables:
+  BUILD_TOOL: 'liquibase'
+  SKIP_TESTS:
+    value: 'false'
+    description: 'No ejecutar tests'
+
+.define-variables:
+  script:
+    - |
+      # Generación de archivo de configuración
+      DATABASE_JDBC=$(echo ${DB_CONNECTION_STRING} | awk -F://  '{print $1}')
+      DATABASE_HOST=$(echo ${DB_CONNECTION_STRING} | awk -F[/?] '{print $3}' | sed 's|.*@||g')
+      DATABASE_AUTH=$(echo ${DB_CONNECTION_STRING} | awk -F[/?] '{print $3}' | grep @ | sed 's|@.*||g') || :
+      DATABASE_USER=$(echo ${DATABASE_AUTH} | sed 's|:.*||g') || :
+      DATABASE_PASS=$(echo ${DATABASE_AUTH} | sed 's|.*:||g') || :
+      [[ $(echo ${DB_CONNECTION_STRING} | grep '\?') ]] && DATABASE_OPTS=?$(echo ${DB_CONNECTION_STRING} | cut -d\? -f2-)
+
+      cat > liquibase.properties << EOF
+      changelogfile: dbchangelog.xml
+      url: ${DATABASE_JDBC}://${DATABASE_HOST}/${DATABASE_NAME}${DATABASE_OPTS}
+      username: ${DATABASE_USER}
+      password: ${DATABASE_PASS}
+      loglevel: ${LOG_LEVEL}
+      showbanner: false
+      contexts: ${ENVIRONMENT}
+      EOF
+      [[ "${LOG_LEVEL}" == "DEBUG" ]] && cat liquibase.properties
+
+validate:
+  image: debian:latest
+  variables:
+    get_version: 'cat VERSION'
+
+tests:unit:
+  rules:
+    - when: never
+
+test:
+  extends: .tests
+  image: gcr.io/bfa-cl-developenvironment-prd/utils/devops-sdk:latest
+  allow_failure: false
+  rules:
+    - if: $SKIP_TESTS != "true"
+      when: always
+  artifacts:
+    paths: []
+  script:
+    - liquibase.sh
+  rules:
+    - if: >
+        $CI_MERGE_REQUEST_IID != null
+      when: always
+
+export-sql:
+  interruptible: true
+  extends: test
+  script:
+    - liquibase-export.sh
+  artifacts:
+    paths:
+      - changelog.sql
+  rules:
+    - if: >
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        $REPOSITORY_LANGUAGE != "mongodb"
+      when: always

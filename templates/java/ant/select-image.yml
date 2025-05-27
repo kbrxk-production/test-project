@@ -1,0 +1,21 @@
+spec:
+  inputs:
+    jdk-version:
+      options:
+        - '4'
+        - '8'
+---
+include:
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'gcr.io/bfa-cl-developenvironment-prd/utils/centos7_java1.4_ant1.8:0.1'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "4"
+
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'openjdk:8-jdk-slim'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "8"

@@ -1,0 +1,22 @@
+<ivysettings>
+  <settings defaultResolver="proget" httpRequestMethod="HEAD"/>
+  <!-- <credentials host="repo.bfcl.tech"
+            username="gitlab-runner" passwd="Wm3q7yaa6VCHc2g"/> -->
+  <!-- <credentials host="repo.bfcl.tech"
+            username="X-ApiKey" passwd="375daaa01a189a21be1422e5c7467f98f7babc33"/> -->
+  <!-- <publications>
+     <artifact name="simple-project" type="jar"/>
+  </publications> -->
+  <property name="proget-public"
+            value="https://repo.bfcl.tech/maven2/maven-proxy"/>
+  <!-- <property name="proget-releases"
+            value="https://repo.bfcl.tech/maven2/maven-proxy"/>
+  <property name="proget-snapshots"
+            value="https://repo.bfcl.tech/maven2/maven-proxy"/> -->
+  <resolvers>
+    <ibiblio name="proget" m2compatible="true" root="${proget-public}"/>
+    <!-- <ibiblio name="proget-releases" m2compatible="true" root="${nexus-releases}"/>
+    <ibiblio name="proget-snapshots" m2compatible="true" root="${nexus-snapshots}"
+             checkmodified="true" changingPattern="*-SNAPSHOT"/> -->
+  </resolvers>
+</ivysettings>

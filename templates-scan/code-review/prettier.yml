@@ -1,0 +1,20 @@
+---
+prettier:
+  interruptible: true
+  stage: code-review
+  image: node:16-slim
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - |
+      # Ejecutando Prettier
+      prettier.sh || exit $?
+  rules:
+    - if: $IS_DYNAMIC_JOB != "true"
+      when: always

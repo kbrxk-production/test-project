@@ -1,0 +1,52 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+    monorepository:
+      default: 'false'
+    operating-system:
+      default: 'aix'
+      options:
+        - 'aix'
+---
+variables:
+  REPOSITORY_LANGUAGE: 'proc'
+  OUTPUT_DIR: 'dist'
+  SKIP_BUILD: 'false'
+  PACKAGING: 'tar.gz'
+  ARTIFACT_PATH: ${OUTPUT_DIR}
+  # TODO: Se debe borrar
+  GIT_LFS_SKIP_SMUDGE: 0
+
+validate:
+  variables:
+    get_group_name: 'echo "unknown"'
+    get_name: 'echo ${CI_PROJECT_NAME}'
+    get_version: 'cat VERSION'
+
+include:
+  # AIX
+  - local: templates/common/template.yml
+    rules:
+      - if: >
+          "$[[ inputs.operating-system ]]" == "aix"
+
+  - local: templates/proc/proc.yml
+    rules:
+      - if: >
+          "$[[ inputs.operating-system ]]" == "aix" &&
+          "$[[ inputs.monorepository ]]" == "false"
+
+
+  - local: templates/proc/monorepository.yml
+    rules:
+      - if: >
+          "$[[ inputs.operating-system ]]" == "aix" &&
+          "$[[ inputs.monorepository ]]" == "true"
+
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'

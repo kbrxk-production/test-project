@@ -1,0 +1,58 @@
+---
+dependency-check-v2:
+  extends: .common-code-review
+  interruptible: true
+  stage: security
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - dependency-check-v2.sh || exit $?
+  cache:
+    - key: ${BUILD_TOOL}
+      when: always
+      paths:
+        - ${REPOSITORY_PATH}
+        - .dependency-check/data
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - if: >
+        $REPOSITORY_LANGUAGE == "java" &&
+        $BUILD_TOOL == "maven" &&
+        $CI_PIPELINE_TRIGGERED != "true"
+      exists:
+        - pom.xml
+      when: always
+    - if: >
+        $REPOSITORY_LANGUAGE == "java" &&
+        $BUILD_TOOL == "gradle" &&
+        $CI_PIPELINE_TRIGGERED != "true"
+      exists:
+        - build.gradle
+      when: always
+
+dependency-check-node-v2:
+  extends: dependency-check-v2
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+    - job: build-artifacts
+      optional: true
+  rules:
+    - if: >
+        $BUILD_TOOL =~ /(^node$|^yarn$|^nest$)/ &&
+        $NODE_VERSION !~ /(^10$|^12$)/  &&
+        $CI_PIPELINE_TRIGGERED != "true"
+      exists:
+        - "**/package.json"
+      when: always

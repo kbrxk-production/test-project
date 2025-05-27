@@ -1,0 +1,103 @@
+---
+.dependency-check:
+  extends: .common-code-review
+  interruptible: true
+  stage: security
+  image:
+    name: gcr.io/bfa-cl-developenvironment-prd/secaas/base/dependency-check:9
+    entrypoint: [""]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+    - job: build-artifacts
+      optional: true
+  variables:
+    CI_JOB: "true"
+    PROJECT_NAME: ${CI_PROJECT_NAME}
+    BUSINESS_ID: ${BUSINESS_ID}
+    SECAAS_PLUGIN_ID: ${SECAAS_PLUGIN_ID}
+    SECAAS_PLUGIN_SECRET: ${SECAAS_PLUGIN_SECRET}
+    DC_TARGET_LANG: java
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - dependency-check-v1.sh || exit $?
+  cache:
+    - key: dependency-check
+      paths:
+        - .dependency-check/data
+      policy: pull-push
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+
+dependency-check-java:
+  extends: .dependency-check
+  rules:
+    - if: $REPOSITORY_LANGUAGE =~ /(^terraform$|^shell$|^typescript$|^python$|^golang$|^postgres$|^proc$)/
+      when: never
+    - if: >
+        $REPOSITORY_LANGUAGE &&
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        ($CI_COMMIT_BRANCH != "" || $CI_PIPELINE_SOURCE == "merge_request_event")
+      when: delayed
+      start_in: 30 seconds
+
+dependency-check-node:
+  extends: .dependency-check
+  cache:
+    - key: node
+      paths:
+        - .npm
+        - ${REPOSITORY_PATH}
+      policy: pull
+    - key: dependency-check
+      paths:
+        - .dependency-check/data
+      policy: pull-push
+  rules:
+    - if: >
+        ($REPOSITORY_LANGUAGE =~ /(^typescript$)/) &&
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        ($CI_COMMIT_BRANCH != "" || $CI_PIPELINE_SOURCE == "merge_request_event")
+      exists:
+        - "**/package.json"
+      when: delayed
+      start_in: 30 seconds
+
+dependency-check-python:
+  extends: .dependency-check
+  rules:
+    - if: >
+        ($REPOSITORY_LANGUAGE =~ /(^python$)/) &&
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        ($CI_COMMIT_BRANCH != "" || $CI_PIPELINE_SOURCE == "merge_request_event")
+      when: always
+
+dependency-check-go:
+  extends: .dependency-check
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  rules:
+    - if: >
+        ($REPOSITORY_LANGUAGE =~ /(^golang$)/) &&
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        ($CI_COMMIT_BRANCH != "" || $CI_PIPELINE_SOURCE == "merge_request_event")
+      when: always
+
+# TODO: Da error:
+# OpenJDK 64-Bit Server VM warning: Unable to open cgroup memory limit file
+#        /sys/fs/cgroup/memory/memory.limit_in_bytes (No such file or directory)
+# [ERROR] One or more fatal errors occurred
+# [ERROR] Unable to connect to the dependency-check database

@@ -1,0 +1,16 @@
+---
+clang-tidy:
+  interruptible: true
+  stage: code-review
+  needs:
+    - job: validate
+    - job: build-artifacts
+  script:
+    - !reference [.code-review, before_script]
+    - clang-tidy.sh || exit $?
+  rules:
+    - exists:
+        - '**/*.c'
+      when: always
+  allow_failure:
+    exit_codes: 127

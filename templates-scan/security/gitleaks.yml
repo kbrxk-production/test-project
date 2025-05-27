@@ -1,0 +1,22 @@
+---
+gitleaks:
+  interruptible: true
+  stage: security
+  image:
+    name: zricethezav/gitleaks
+    entrypoint: ["sh", "-c"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - gitleak.sh || exit $?
+  rules:
+    - if: >
+        ($CI_COMMIT_BRANCH != "" || $CI_PIPELINE_SOURCE == "merge_request_event") &&
+        $IS_DYNAMIC_JOB != "true"
+      when: always

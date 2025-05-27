@@ -1,0 +1,19 @@
+spec:
+  inputs:
+    dbms-vendor:
+      default: ''
+---
+variables:
+  REPOSITORY_LANGUAGE: postgres
+  DATABASE_VENDOR: postgres
+  POSTGRES_USER: username
+  POSTGRES_PASSWORD: 1234
+
+test:
+  services:
+    - name: postgres:latest
+      alias: postgres
+  variables:
+    DATABASE_NAME: postgres
+    DB_CONNECTION_STRING: >
+      jdbc:postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_NAME}:5432

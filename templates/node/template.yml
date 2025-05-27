@@ -1,0 +1,43 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+    node-version:
+    node-framework:
+      default: ''
+      options:
+        - angular
+        - react
+        - nest
+        - ''
+---
+include:
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+  # Node
+  - local: templates/node/node/template.yml
+    inputs:
+      node-version: '$[[ inputs.node-version ]]'
+
+  # Angular
+  - local: templates/node/angular/template.yml
+    rules:
+      - if: >
+          "$[[ inputs.node-framework ]]" == "angular"
+
+  # React
+  - local: templates/node/react/template.yml
+    rules:
+      - if: >
+          "$[[ inputs.node-framework ]]" == "react"
+
+  # Nest
+  - local: templates/node/nest/template.yml
+    rules:
+      - if: >
+          "$[[ inputs.node-framework ]]" == "nest"

@@ -1,0 +1,26 @@
+spec:
+  inputs:
+    jdk-version:
+      default: ''
+    jdk-packaging:
+      default: ''
+    jdk-framework:
+      default: ''
+---
+include:
+  - local: templates/java/maven/template.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+      jdk-packaging: '$[[ inputs.jdk-packaging ]]'
+      jdk-framework: '$[[ inputs.jdk-framework ]]'
+
+variables:
+  MAVEN_MULTIMODULE: 'true'
+
+# validate:
+#   variables:
+#     get_name: |
+#       for module in $$(mvn help:evaluate -Dexpression=project.modules -q -DforceStdout | tail -n +2 | head -n -1 | sed 's/\s*<.*>\(.*\)<.*>/\1/'); do
+#         mvn --non-recursive help:evaluate -f $${module} -Dexpression=project.packaging -q -DforceStdout | grep -w ${PACKAGING} > /dev/null &&
+#         echo $${module} || true;
+#       done

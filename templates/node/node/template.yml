@@ -1,0 +1,100 @@
+spec:
+  inputs:
+    node-version:
+---
+include:
+  - local: templates/node/node/select-image.yml
+    inputs:
+      node-version: '$[[ inputs.node-version ]]'
+
+variables:
+  ARTIFACT_PATH: 'dist'
+  BUILD_TOOL: 'node'
+  OUTPUT_DIR: 'src'
+  TESTS_PATH_REGEX: 'src/test/'
+  NODE_VERSION: '$[[ inputs.node-version ]]'
+  PACKAGING: 'tar.gz'
+  REPOSITORY_LANGUAGE: 'typescript'
+  REPOSITORY_PATH: 'node_modules'
+  NODE_OPTIONS: '--max-old-space-size=4096'
+  FORCE_COLOR: 'true'
+  SNAPSHOT_REPOSITORY: npm-snapshots
+  STABLE_REPOSITORY: npm-releases
+
+.workflow-extras:
+  rules:
+    - exists:
+        - package.json
+      variables:
+        SKIP_BUILD: 'false'
+      when: always
+    - exists:
+        - '**/package.json'
+      variables:
+        SKIP_BUILD: 'true'
+      when: always
+
+.values:
+  script:
+    - |
+      get_group_name() {
+        node -pe "require('./package.json').name" | grep @ | sed 's|@\(.*\)/.*|\1|g'
+      }
+      get_name() {
+        node -pe "require('./package.json').name" | sed 's|.*/||g'
+      }
+      get_version() {
+        node -pe "require('./package.json').version"
+      }
+
+validate:
+  variables:
+    get_group_name: >
+      node -pe "require('./package.json').name" | sed 's|@\(.*\)/.*|\1|g'
+    get_name: node -pe "require('./package.json').name" | sed 's|.*/||g'
+    get_version: node -pe "require('./package.json').version"
+
+build-artifacts:
+  script:
+    - node-build.sh || echo $?
+  cache:
+    - key: node
+      paths:
+        - .npm
+        - ${REPOSITORY_PATH}
+  artifacts:
+    expire_in: 1 day
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    when: always
+    paths:
+      - ${OUTPUT_DIR}
+      - ${FINAL_NAME}
+  rules:
+    - if: $CI_COMMIT_BRANCH != "" && $FULL_PIPELINE == "true"
+      exists:
+        - package.json
+
+pages:
+  needs:
+    - job: validate
+      optional: true
+    - job: build-artifacts
+      optional: true
+  script:
+    - mv dist/${ARTIFACT_NAME} public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: >
+        $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH &&
+        $FULL_PIPELINE == "true" &&
+        $IS_DYNAMIC_JOB != "true"
+      exists:
+        - package.json
+      when: always
+
+tests:unit:
+  script:
+    - node-test.sh || exit $?

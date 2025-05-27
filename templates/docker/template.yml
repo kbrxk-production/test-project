@@ -1,0 +1,50 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: ''
+---
+include:
+  - local: templates/common/template.yml
+
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+variables:
+  SKIP_IMAGE: 'false'
+  ARTIFACT_PATH: '.'
+
+validate:
+  image: debian:latest
+  variables:
+    get_version: 'cat VERSION'
+
+.tests:
+  script:
+    - |
+      docker run --rm "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+      curl -sLO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
+      chmod +x container-structure-test-linux-amd64
+      mv container-structure-test-linux-amd64 /usr/local/bin/container-structure-test
+
+      container-structure-test test --image "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" --config unit-test.yaml
+      if $?
+      then
+        echo "Test Failed"
+        exit 1
+      else
+        echo "Test Succeeded"
+        exit 0
+      fi
+
+tests:unit:
+  # image: gcr.io/bfa-cl-developenvironment-prd/utils/devops-sdk:latest
+  # needs:
+  #   - job: validate
+  # - job: build-image
+  rules:
+    - when: never

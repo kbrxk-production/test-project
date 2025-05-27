@@ -1,0 +1,37 @@
+spec:
+  inputs:
+    python-version:
+      options:
+        - '3.7'
+        - '3.9'
+        - '3.11'
+        - '3.12'
+---
+include:
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'python:3.7-slim'
+    rules:
+      - if: >
+          "$[[ inputs.python-version ]]" == "3.7"
+
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'python:3.9-slim'
+    rules:
+      - if: >
+          "$[[ inputs.python-version ]]" == "3.9"
+
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'python:3.11-slim'
+    rules:
+      - if: >
+          "$[[ inputs.python-version ]]" == "3.11"
+
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'python:3.12-slim'
+    rules:
+      - if: >
+          "$[[ inputs.python-version ]]" == "3.12"

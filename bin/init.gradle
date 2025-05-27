@@ -1,0 +1,46 @@
+apply plugin: EnterpriseRepositoryPlugin
+
+class EnterpriseRepositoryPlugin implements Plugin<Gradle> {
+
+    private static String ENTERPRISE_REPOSITORY_URL = System.getenv('MAVEN_REPOSITORY')
+
+    void apply(Gradle gradle) {
+        // ONLY USE ENTERPRISE REPO FOR DEPENDENCIES
+        gradle.allprojects { project ->
+            project.repositories {
+
+                // Remove all repositories not pointing to the enterprise repository url
+                all { ArtifactRepository repo ->
+                    if (!(repo instanceof MavenArtifactRepository) ||
+                          repo.url.toString() != ENTERPRISE_REPOSITORY_URL) {
+                        project.logger.lifecycle "Repository ${repo.url} removed. Only $ENTERPRISE_REPOSITORY_URL is allowed"
+                        remove repo
+                    }
+                }
+
+                // add the enterprise repository
+                maven {
+                    name "STANDARD_ENTERPRISE_REPO"
+                    url ENTERPRISE_REPOSITORY_URL
+                    credentials(HttpHeaderCredentials) {
+                        name = "X-ApiKey"
+                        value = System.getenv('ARTIFACT_REPOSITORY_KEY')
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                    metadataSources {
+                        mavenPom()
+                        artifact()
+                    }
+                }
+            }
+            // jacocoTestReport {
+            //     reports {
+            //         xml.required = true
+            //         html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+            //     }
+            // }
+        }
+    }
+}

@@ -1,0 +1,42 @@
+---
+plan:
+  extends: .common-code-review
+  interruptible: true
+  stage: .pre
+  script:
+    - ":"
+  rules:
+    - when: never
+
+checkov:
+  interruptible: true
+  stage: security
+  image:
+    name: bridgecrew/checkov:latest
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  tags: ["gl-runner-build"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+    - job: plan
+      optional: true
+  variables:
+    EXIT_ON_FAILURE: 1
+  script:
+    - !reference [.code-review, before_script]
+    - checkov.sh || exit 127
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - if: >
+        ($REPOSITORY_LANGUAGE =~ /(terraform)/ && $CREATE == "true") ||
+        ($IS_DYNAMIC_JOB != "true")
+      when: always
+  allow_failure:
+    exit_codes: 127

@@ -1,0 +1,20 @@
+spec:
+  inputs:
+    jdk-version:
+      options:
+        - '8'
+        - '11'
+---
+include:
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'gradle:8-jdk8'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "8"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'gradle:8-jdk11'
+    rules:
+      - if: >
+          "$[[ inputs.jdk-version ]]" == "11"

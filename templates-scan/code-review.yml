@@ -1,0 +1,45 @@
+---
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - local: "templates/code-review/*.yml"
+  - local: "templates/security/*.yml"
+
+.code-review:
+  before_script:
+    - |
+      # Loading binaries:
+      export CR_PROJECT_ID=40829
+      FILE_LOCATION="${CI_API_V4_URL}/projects/${CR_PROJECT_ID}/repository/archive"
+      BIN_REPOSITORY="fif/banco-falabella/devops/ci-cd/code-review/code-review-pipeline.git"
+      if which git > /dev/null 2>&1; then
+        git clone ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${BIN_REPOSITORY} \
+          /tmp/common-review
+      else
+        PACKAGES=git
+        if [[ -f /etc/alpine-release ]]; then
+          echo "Sistema operativo detectado: Alpine"
+          apk add --no-cache ${PACKAGES} > /tmp/apk.log 2>&1 || cat /tmp/apk.log
+        elif [[ -f /etc/debian_version ]]; then
+          echo "Sistema operativo detectado: Debian"
+          apt -qq update > /tmp/apt.log 2>&1 || cat /tmp/apt.log
+          apt -qq install -y ${PACKAGES} > /tmp/apt.log 2>&1 || cat /tmp/apt.log
+        else
+          yum install -y -q ${PACKAGES} 2> /dev/null || :
+        fi
+        git clone ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${BIN_REPOSITORY} \
+          /tmp/common-review
+      fi
+      [ -n "${ERROR}" ] &&
+        echo -e "${RED}No se pudo descargar la ultima version de code-review${NORMAL}" &&
+        exit 1
+      [ -f /tmp/code-review.tar.gz ] &&
+        tar -xf /tmp/code-review.tar.gz -C /tmp
+      mv /tmp/*/bin/ ${HOME}/
+      export PATH=${HOME}/bin:${PATH}
+
+.common-code-review:
+  artifacts:
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    reports:
+      dotenv: reports.env

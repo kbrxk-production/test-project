@@ -1,0 +1,48 @@
+spec:
+  inputs:
+    node-version:
+      options:
+        - '10'
+        - '12'
+        - '14'
+        - '16'
+        - '18'
+        - '20'
+---
+include:
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'node:10-buster'
+    rules:
+      - if: >
+          "$[[ inputs.node-version ]]" == "10"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'node:12-buster'
+    rules:
+      - if: >
+          "$[[ inputs.node-version ]]" == "12"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'node:14-buster'
+    rules:
+      - if: >
+          "$[[ inputs.node-version ]]" == "14"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'node:16-buster'
+    rules:
+      - if: >
+          "$[[ inputs.node-version ]]" == "16"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'node:18-bullseye'
+    rules:
+      - if: >
+          "$[[ inputs.node-version ]]" == "18"
+  - local: templates/common/template.yml
+    inputs:
+      compiler-image: 'node:20-bullseye'
+    rules:
+      - if: >
+          "$[[ inputs.node-version ]]" == "20"

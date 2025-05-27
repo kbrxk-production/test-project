@@ -1,0 +1,25 @@
+---
+
+# TODO: No funciona con procedimientos almacenados
+
+prettier-sql:
+  interruptible: true
+  stage: code-review
+  image: node:16-slim
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - prettier-sql.sh || exit $?
+  rules:
+    - when: never
+    - if: >
+        $CI_PIPELINE_TRIGGERED != "true" &&
+        $IS_DYNAMIC_JOB != "true" &&
+        $DATABASE_VENDOR  =~ /(^postgres$)/
+      when: always

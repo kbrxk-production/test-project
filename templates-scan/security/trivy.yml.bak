@@ -1,0 +1,28 @@
+#---
+#include:
+#  - project: 'tech-corp/seguridad-de-la-informacion/ci-templates/trivy'
+#    ref: main
+#    file: 
+#      - '/template/.ci-template.yml'
+#
+#
+#
+#.container-scan-secaas:
+#  stage: 🔍 code-review
+#  tags: ["gitlab-shared-runners", "docker"]
+#  needs:
+#    - job: init
+#      optional: true
+#    - job: build-image
+#      optional: true
+#  allow_failure: true
+#  variables:
+#    CS_IMAGE: "${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+#    CS_REGISTRY_USER: "_json_key"
+#    CS_REGISTRY_PASSWORD: $(echo "$GCR_SERVICE_ACCOUNT" | base64 -d)
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == ""'
+#      when: never
+#    - exists:
+#        - Dockerfile
+        

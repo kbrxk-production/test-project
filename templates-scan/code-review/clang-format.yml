@@ -1,0 +1,15 @@
+---
+clang-format:
+  interruptible: true
+  stage: code-review
+  needs:
+    - job: validate
+  script:
+    - !reference [.code-review, before_script]
+    - clang-format.sh || exit $?
+  rules:
+    - exists:
+        - '**/*.c'
+      when: always
+  allow_failure:
+    exit_codes: 127

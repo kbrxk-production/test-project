@@ -1,0 +1,8 @@
+---
+validate:
+  tags: ['runner-bfcl-onpremise']
+
+build-artifacts:
+  tags: ['runner-bfcl-onpremise']
+  script:
+    - proc-aix-build.sh || exit $?

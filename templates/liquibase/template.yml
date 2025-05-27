@@ -1,0 +1,39 @@
+spec:
+  inputs:
+    deployment-platform:
+      default: ''
+    deployment-preffix:
+      default: '${BUSINESS_SERVICE_NAME}'
+    dbms-vendor:
+      options:
+        - mariadb
+        - postgres
+        - mongodb
+---
+include:
+  - local: templates/common/template.yml
+  - local: templates/liquibase/common/template.yml
+
+  - component: gitlab.com/devops/ci-cd/deployment-pipeline/trigger@main
+    inputs:
+      deployment-platform: '$[[ inputs.deployment-platform ]]'
+      deployment-preffix: '$[[ inputs.deployment-preffix | expand_vars ]]'
+
+  - local: templates/liquibase/mariadb/template.yml
+    inputs:
+      dbms-vendor: $[[ inputs.dbms-vendor ]]
+    rules:
+      - if: >
+          "$[[ inputs.dbms-vendor ]]" == "mariadb"
+  - local: templates/liquibase/mongodb/template.yml
+    inputs:
+      dbms-vendor: $[[ inputs.dbms-vendor ]]
+    rules:
+      - if: >
+          "$[[ inputs.dbms-vendor ]]" == "mongodb"
+  - local: templates/liquibase/postgres/template.yml
+    inputs:
+      dbms-vendor: $[[ inputs.dbms-vendor ]]
+    rules:
+      - if: >
+          "$[[ inputs.dbms-vendor ]]" == "postgres"

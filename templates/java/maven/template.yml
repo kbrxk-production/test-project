@@ -1,0 +1,152 @@
+spec:
+  inputs:
+    jdk-version:
+      default: ''
+    jdk-packaging:
+      options:
+        - 'jar'
+        - 'ear'
+        - 'war'
+        - 'pom'
+    jdk-framework:
+      default: ''
+      options:
+        - quarkus
+        - appengine
+        - micronaut
+        - shade
+        - ''
+    maven-multimodule:
+      type: string
+      default: 'false'
+      options:
+        - "true"
+        - "false"
+---
+include:
+  - local: templates/java/maven/select-image.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+
+variables:
+  BUILD_TOOL: 'maven'
+  SKIP_BUILD: 'false'
+  REPOSITORY_LANGUAGE: 'java'
+  JDK_VERSION: $[[ inputs.jdk-version ]]
+  PACKAGING: $[[ inputs.jdk-packaging ]]
+  OUTPUT_DIR: 'target'
+  TESTS_PATH_REGEX: 'src/test/'
+  REPOSITORY_PATH: '.m2/repository'
+  ARTIFACT_PATH: ${OUTPUT_DIR}
+  SNAPSHOT_REPOSITORY: 'maven-snapshots'
+  STABLE_REPOSITORY: 'maven-releases'
+  JACOCO_REPORT_PATH: 'target/site/jacoco/jacoco.xml'
+  JACOCO_PLUGIN_VERSION: '0.8.11'
+  JDK_FRAMEWORK: $[[ inputs.jdk-framework ]]
+  MAVEN_MULTIMODULE: 'false'
+
+validate:
+  variables:
+    get_group_name: 'mvn -Dmaven.repo.local=${REPOSITORY_PATH} --non-recursive help:evaluate -Dexpression=project.groupId -q -DforceStdout'
+    get_name: 'mvn -Dmaven.repo.local=${REPOSITORY_PATH} --non-recursive help:evaluate -Dexpression=project.artifactId -q -DforceStdout'
+    get_version: 'mvn -Dmaven.repo.local=${REPOSITORY_PATH} --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout'
+    get_packaging: 'mvn -Dmaven.repo.local=${REPOSITORY_PATH} --non-recursive help:evaluate -Dexpression=project.jdk-packaging -q -DforceStdout'
+
+build-artifacts:
+  variables:
+    MAVEN_CONFIG: /usr/share/maven/conf
+    MAVEN_OPTS: >-
+      -Dhttps.protocols=TLSv1.2
+      -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN
+      -Dorg.slf4j.simpleLogger.showDateTime=true
+      -Djava.awt.headless=true
+      -XX:+TieredCompilation
+      -XX:TieredStopAtLevel=1
+      -Djansi.force=true
+    MAVEN_CLI_OPTS: >-
+      --errors
+      --show-version
+      --no-transfer-progress
+      -T 1
+      -Dstyle.color=always
+      -Dmaven.repo.local=${REPOSITORY_PATH}
+      -Dmaven.compiler.debug=true
+      -Dmaven.compiler.debuglevel=lines,vars,source
+      -Dmaven.compiler.showDeprecation=true
+      -Dmaven.compiler.showWarnings=true
+      -Dmaven.test.skip=true
+      -Dmaven.javadoc.skip=true
+  script:
+    - '[[ "${ARTIFACT_NAME}" == "standalone-pom" ]] && exit 0'
+    - maven-build.sh || exit $?
+  artifacts:
+    expire_in: 1 day
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    paths:
+      - ${OUTPUT_DIR}
+      - '**/${OUTPUT_DIR}'
+      - pom.xml
+
+tests:unit:
+  variables:
+    MAVEN_CLI_OPTS: >-
+      --errors
+      --fail-at-end
+      --show-version
+      --no-transfer-progress
+      -Dstyle.color=always
+      -Dmaven.repo.local=${REPOSITORY_PATH}
+      -Dmaven.javadoc.skip=true
+      -Dmaven.compiler.debug=true
+      -Dmaven.compiler.debuglevel=lines,vars,source
+    MAVEN_EXTRAS: >-
+      org.jacoco:jacoco-maven-plugin:${JACOCO_PLUGIN_VERSION}:prepare-agent
+      test
+      org.jacoco:jacoco-maven-plugin:${JACOCO_PLUGIN_VERSION}:report
+  script:
+    - maven-test.sh || exit $?
+  cache:
+    - key: ${BUILD_TOOL}
+      paths:
+        - ${REPOSITORY_PATH}
+  artifacts:
+    when: always
+    paths:
+      - ${JACOCO_REPORT_PATH}
+
+tests:integration:
+  rules:
+    - when: never
+
+pages:
+  extends: tests:unit
+  needs:
+    - job: validate
+      optional: true
+  variables:
+    MAVEN_CLI_OPTS: >-
+      --errors
+      --fail-at-end
+      --show-version
+      --no-transfer-progress
+      -Dstyle.color=always
+      -Dmaven.repo.local=${REPOSITORY_PATH}
+      -Dmaven.compiler.debug=true
+      -Dmaven.compiler.debuglevel=lines,vars,source
+      -Dmaven.test.skip=true
+    MAVEN_EXTRAS: ''
+  script:
+    - maven-docs.sh || exit $?
+  artifacts:
+    when: always
+    paths:
+      - public
+  rules:
+    - if: >
+        $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH &&
+        $FULL_PIPELINE == "true" &&
+        $IS_DYNAMIC_JOB != "true"
+      exists:
+        - pom.xml
+      when: always

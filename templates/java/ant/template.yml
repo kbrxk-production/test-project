@@ -1,0 +1,65 @@
+spec:
+  inputs:
+    jdk-packaging:
+      default: 'jar'
+      options:
+        - 'jar'
+        - 'ear'
+        - 'war'
+    jdk-version:
+---
+include:
+  - local: templates/java/ant/select-image.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+
+variables:
+  BUILD_TOOL: 'ant'
+  SKIP_BUILD: 'false'
+  REPOSITORY_LANGUAGE: 'java'
+  JDK_VERSION: $[[ inputs.jdk-version ]]
+  PACKAGING: $[[ inputs.jdk-packaging ]]
+  OUTPUT_DIR: 'gen/build'
+  TESTS_PATH_REGEX: 'src/test/'
+  ARTIFACT_PATH: 'dist'
+  SNAPSHOT_REPOSITORY: 'maven-snapshots'
+  STABLE_REPOSITORY: 'maven-releases'
+  JACOCO_REPORT_PATH: 'dist/jacoco.xml'
+
+validate:
+  variables:
+    get_group_name: >-
+        grep -r '<property' build.xml | grep group_name | sed -e 's/.*value=\"//g' -e 's/\".*//g'
+    get_name: >-
+        grep -r '<property' build.xml | grep project_name | sed -e 's/.*value=\"//g' -e 's/\".*//g'
+    get_version: >-
+        (grep -r '<property' build.xml | grep project_version || echo '1.0.0') |
+        sed -e 's/.*value=\"//g' -e 's/\".*//g'
+  # script:
+  #   - |
+  #     # get validate.sh
+  #     curl -s -o /usr/local/bin/validate.sh \
+  #       ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/devops/ci-cd/build-pipeline/-/raw/main/bin/validate.sh
+  #     chmod +x /usr/local/bin/validate.sh
+  #     validate.sh || exit $?
+
+build-artifacts:
+  script:
+    - |
+      # get ant-build.sh
+      curl -s -o /usr/local/bin/ant-build.sh \
+        ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/devops/ci-cd/build-pipeline/-/raw/main/bin/ant-build.sh
+      chmod +x /usr/local/bin/ant-build.sh
+    - ant-build.sh || exit $?
+  artifacts:
+    expire_in: 1 day
+    name: ${CI_COMMIT_REF_SLUG}
+    access: all
+    paths:
+      - ${OUTPUT_DIR}
+      - ${FINAL_NAME}
+
+tests:unit:
+  rules:
+    - exists:
+        - $TESTS_PATH_REGEX

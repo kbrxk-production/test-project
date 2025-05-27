@@ -1,0 +1,55 @@
+spec:
+  inputs:
+    jdk-version:
+      default: ''
+    jdk-packaging:
+      options:
+        - 'jar'
+        - 'ear'
+        - 'war'
+    jdk-framework:
+      default: ''
+---
+include:
+  - local: templates/java/gradle/select-image.yml
+    inputs:
+      jdk-version: '$[[ inputs.jdk-version ]]'
+
+variables:
+  BUILD_TOOL: 'gradle'
+  SKIP_BUILD: 'false'
+  REPOSITORY_LANGUAGE: 'java'
+  JDK_VERSION: $[[ inputs.jdk-version ]]
+  PACKAGING: $[[ inputs.jdk-packaging ]]
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.logging.level=warn -Dquarkus.package.type=uber-jar'
+  GRADLE_USER_HOME: 'gradle'
+  OUTPUT_DIR: 'build'
+  CLASSIFIER: all
+  REPOSITORY_PATH: '${GRADLE_USER_HOME}/caches/modules-2/files-2.1'
+  ARTIFACT_PATH: ${OUTPUT_DIR}/libs
+  SNAPSHOT_REPOSITORY: maven-snapshots
+  STABLE_REPOSITORY: maven-releases
+  JACOCO_REPORT_PATH: 'build/reports/jacoco/test/jacocoTestReport.xml'
+  JDK_FRAMEWORK: $[[ inputs.jdk-framework ]]
+
+validate:
+  variables:
+    get_group_name: 'gradle -q properties | grep ^group: | sed "s|group: ||g"'
+    get_name: 'gradle -q properties | grep ^archivesBaseName: | sed "s|archivesBaseName: ||g"'
+    get_version: 'gradle -q properties | grep ^version: | sed "s|version: ||g"'
+
+build-artifacts:
+  script:
+    - gradle-build.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH != "" && $FULL_PIPELINE == "true"
+      exists:
+        - build.gradle
+
+tests:unit:
+  script:
+    - gradle-test.sh
+  artifacts:
+    when: always
+    paths:
+      - ${JACOCO_REPORT_PATH}

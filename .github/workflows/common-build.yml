@@ -8,7 +8,7 @@ on:
         type: string
         required: false
 
-        # .NET specific inputs
+      # .NET specific inputs
       net_version:
         description: 'Versión de .NET a utilizar'
         type: string
@@ -34,13 +34,13 @@ jobs:
     if: ${{ inputs.language == 'dotnet' }}
     with:
       language: 'dotnet'
-      net_version: '6.0'
-      net_framework: 'console'
+      net_version: '${{ inputs.net_version }}'
+      net_framework: '${{ inputs.net_framework }}'
 
   build-node:
     uses: './.github/workflows/common-build-node.yml'
     if: ${{ inputs.language == 'node' }}
     with:
       language: 'node'
-      node_version: '16.x'
-      node_framework: 'none'
+      node_version: '${{ inputs.node_version }}'
+      node_framework: '${{ inputs.node_framework }}'

@@ -1,0 +1,31 @@
+---
+include:
+  - project: 'tech-corp/seguridad-de-la-informacion/ci-templates/trivy'
+    ref: main
+    file:
+      - '/template/.ci-template.yml'
+  - template: Security/Container-Scanning.latest.gitlab-ci.yml
+
+container_scanning:
+  stage: 🔍 code-review
+  dependencies:
+    - init
+  needs:
+    - job: init
+      optional: true
+    - job: build-image
+      optional: true
+  allow_failure: true
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
+    GIT_SUBMODULE_STRATEGY: recursive
+    SCAN_IMAGE: "${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+    CS_REGISTRY_USER: "_json_key"
+    CS_REGISTRY_PASSWORD: $(echo "$GCR_SERVICE_ACCOUNT" | base64 -d)
+  before_script:
+    - !reference [.code-review, before_script]
+    - trivy.sh
+  rules:
+    - exists:
+        - Dockerfile

@@ -1,0 +1,51 @@
+---
+markdown-lint:
+  extends: .common-code-review
+  interruptible: true
+  stage: code-review
+  image:
+    name: node:18
+    entrypoint: [""]
+  tags: ["gl-runner-build"]
+  needs:
+    - job: validate
+      optional: true
+    - job: init-deploy
+      optional: true
+  allow_failure:
+    exit_codes: 127
+  script:
+    - !reference [.code-review, before_script]
+    - npm install --silent -g markdownlint-cli
+    - (apt -qq update && apt -qq install -y jq) > /dev/null 2>&1
+    - markdownlint --version
+    - |
+      markdownlint . || ERROR=1
+      MARKDOWNLINT_REPORT_PATH="${SONAR_USER_HOME}/markdownlint_report.json"
+      if [ "${ERROR}" = "1" ]; then
+        mkdir -p ${SONAR_USER_HOME}
+        (markdownlint --json --output ${SONAR_USER_HOME}/report.json . ||:)
+        cat ${SONAR_USER_HOME}/report.json | jq -r 'group_by(.component)[] |
+          {"issues": [.[] | {
+            "engineId": "markdown-lint",
+            "ruleId": .ruleNames[0],
+            "type": "CODE_SMELL",
+            "severity": "MINOR",
+            "effortMinutes": 5,
+            "primaryLocation": {
+              "message": .ruleDescription,
+              "filePath": .fileName,
+              "textRange": {
+                "startLine": .lineNumber,
+                "startColumn": (if (.errorRange[0] == null) then null else (.errorRange[0] - 1) end) }}}]}' \
+                                             > ${MARKDOWNLINT_REPORT_PATH}
+        echo "MARKDOWNLINT_REPORT_PATH=${MARKDOWNLINT_REPORT_PATH}" | tee reports.env
+        exit 127
+      fi
+  artifacts:
+    paths:
+      - ${SONAR_USER_HOME}
+    when: on_failure
+  rules:
+    - if: '$CI_PIPELINE_TRIGGERED != "true" && $IS_DYNAMIC_JOB != "true"'
+      when: always
