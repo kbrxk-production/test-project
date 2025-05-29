@@ -31,6 +31,7 @@ jobs:
       - name: Convco check
         # TODO: Compare against the correct branch or commit
         run: |
+          git tag -d v1.0.0 || true
           git tag v1.0.0
           convco changelog -m 1 v1.0.0 | tee CHANGELOG.md
 
