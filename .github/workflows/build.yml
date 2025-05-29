@@ -33,7 +33,8 @@ jobs:
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           npm install -g release-it --force
-          release-it premajor --no-prompt --ci
+          release-it premajor --preRelease=RC --no-prompt --ci
+          git tag
 
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
