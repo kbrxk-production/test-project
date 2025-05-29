@@ -65,7 +65,7 @@ jobs:
         # TODO: Compare against the correct branch or commit
         run: |
           VERSION=$(git tag | tail -1)
-          convco changelog -m 1 $VERSION | tee CHANGELOG.md
+          convco changelog -m1 $VERSION | tee CHANGELOG.md
 
       - name: release
         uses: softprops/action-gh-release@v2
