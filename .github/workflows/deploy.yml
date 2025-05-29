@@ -72,7 +72,6 @@ jobs:
           convco_version: 'latest'
 
       - name: Changelog generation
-        # TODO: Compare against the correct branch or commit
         run: |
           VERSION=${{ steps.release_it.outputs.version }}
           echo "Generating changelog for version: $VERSION"
@@ -84,7 +83,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           body_path: CHANGELOG.md
-          # TODO: Set the tag name for your release
           tag_name: ${{ steps.release_it.outputs.version }}
           draft: false
           prerelease: true
