@@ -29,9 +29,10 @@ jobs:
 
       - name: release-it
         run: |
+          set -ex
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          npm install -g release-it
+          npm install -g release-it --force
           release-it premajor --no-prompt --ci
 
       - name: Changelog generation
