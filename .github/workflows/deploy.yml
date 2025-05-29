@@ -10,9 +10,6 @@ on:
       - synchronize
       - reopened
 
-permissions:
-  contents: write
-
 jobs:
   build:
     # TODO: Must support multiple languages
@@ -24,12 +21,18 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: convco/convco-action@v0.2.0
+        with:
+          convco_version: 'latest'
 
       - uses: convco/convco-action@v0.2.0
         with:
