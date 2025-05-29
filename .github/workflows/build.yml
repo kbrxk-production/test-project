@@ -4,9 +4,6 @@ on:
   push:
   merge_group:
 
-permissions:
-  contents: write
-
 jobs:
   build:
     uses: './.github/workflows/common-build.yml'
