@@ -29,6 +29,8 @@ jobs:
       # id-token: write
       # pages: write
       # security-events: write
+    outputs:
+      VERSION: ${{ steps.release-it.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -42,6 +44,7 @@ jobs:
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           npm install -g release-it --force
           release-it prerelease --ci
+          echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
 
       # - name: Changelog generation
       #   # TODO: Compare against the correct branch or commit
@@ -64,7 +67,7 @@ jobs:
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
         run: |
-          export VERSION=$(git tag | tail -1)
+          VERSION=${{ steps.release-it.outputs.version }}
           convco changelog -m1 $VERSION | tee CHANGELOG.md
 
       - name: release
@@ -74,7 +77,7 @@ jobs:
         with:
           body_path: CHANGELOG.md
           # TODO: Set the tag name for your release
-          tag_name: ${{ env.VERSION }}
+          tag_name: ${{ steps.release-it.outputs.version }}
           draft: false
           prerelease: true
           # TODO: Add the path to your release assets
