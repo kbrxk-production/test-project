@@ -27,7 +27,7 @@ jobs:
 
       - name: Convco check
         # TODO: Compare against the correct branch or commit
-        run: convco changelog > CHANGELOG.md
+        run: convco changelog | tee CHANGELOG.md
 
       - name: release
         uses: softprops/action-gh-release@v2
