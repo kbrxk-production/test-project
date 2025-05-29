@@ -21,18 +21,51 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     needs: build
+    permissions:
+      # actions: write
+      # attestations: write
+      # checks: write
+      contents: write
+      # deployments: write
+      pull-requests: write
+      # issues: write
+      # statuses: write
+      # discussions: write
+      # packages: write
+      # id-token: write
+      # pages: write
+      # security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: convco/convco-action@v0.2.0
-        with:
-          convco_version: 'latest'
+      - name: release-it
+        id: release_it
+        run: |
+          set -ex
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          npm install -g release-it --force
+          release-it premajor --preRelease=RC -i major --ci
+          git tag | tail -1
+          echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
+
+      # - name: Changelog generation
+      #   # TODO: Compare against the correct branch or commit
+      #   run: |
+      #     git tag
+      #     git tag -d v1.0.0 || true
+      #     git tag v1.0.0
+
+      # - uses: googleapis/release-please-action@v4
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     release-type: simple
+      #     skip-github-pull-request: true
+      #     skip-github-release: false
 
       - uses: convco/convco-action@v0.2.0
         with:
@@ -41,10 +74,9 @@ jobs:
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
         run: |
-          git tag -d v1.0.0 || true
-          git tag v1.0.0
-          git push origin v1.0.0 --force || true
-          convco changelog -m 1 v1.0.0 | tee CHANGELOG.md
+          VERSION=${{ steps.release_it.outputs.version }}
+          echo "Generating changelog for version: $VERSION"
+          convco changelog -m1 $VERSION | tee CHANGELOG.md
 
       - name: release
         uses: softprops/action-gh-release@v2
@@ -53,7 +85,7 @@ jobs:
         with:
           body_path: CHANGELOG.md
           # TODO: Set the tag name for your release
-          tag_name: v1.0.0
+          tag_name: ${{ steps.release_it.outputs.version }}
           draft: false
           prerelease: true
           # TODO: Add the path to your release assets
