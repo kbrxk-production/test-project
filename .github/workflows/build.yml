@@ -26,12 +26,12 @@ jobs:
           convco_version: 'latest'
 
       - name: Convco check
-        run: convco changelog
+        run: convco changelog > CHANGELOG.md
 
       - name: release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: README.md
+          body_path: CHANGELOG.md
           tag_name: v1.0.0
           draft: false
           prerelease: true
