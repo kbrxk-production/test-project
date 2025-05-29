@@ -47,6 +47,8 @@ jobs:
           semantic-release -t 'v${version}' --ci
           git tag | tail -1
           echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: convco/convco-action@v0.2.0
         with:
