@@ -5,8 +5,20 @@ on:
   merge_group:
 
 permissions:
+  actions: write
+  attestations: write
+  checks: write
   contents: write
+  deployments: write
   pull-requests: write
+  issues: write
+  statuses: write
+  discussions: write
+  models: write
+  packages: write
+  id-token: write
+  pages: write
+  security-events: write
 
 
 jobs:
