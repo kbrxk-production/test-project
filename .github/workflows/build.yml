@@ -30,6 +30,7 @@ jobs:
       - uses: JoshuaKGoldberg/release-it-action@v0.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
