@@ -28,9 +28,10 @@ jobs:
           convco_version: 'latest'
 
       - uses: JoshuaKGoldberg/release-it-action@v0.3.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          npm-token: ${{ secrets.GITHUB_TOKEN }}
+          release-it-args: 'premajor --preRelease=RC'
 
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
