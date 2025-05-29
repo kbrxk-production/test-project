@@ -47,6 +47,14 @@ jobs:
       #     npm install -g release-it --force
       #     release-it premajor --preRelease=RC --no-prompt --ci
       #     git tag
+
+      - name: Changelog generation
+        # TODO: Compare against the correct branch or commit
+        run: |
+          git tag
+          git tag -d v1.0.0 || true
+          git tag v1.0.0
+
       - uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
