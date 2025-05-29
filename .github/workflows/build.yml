@@ -14,27 +14,3 @@ jobs:
       language: 'dotnet'
       net_version: '6.0'
       net_framework: 'console'
-
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - uses: convco/convco-action@v0.2.0
-        with:
-          convco_version: 'latest'
-
-      - name: Convco check
-        run: convco changelog > CHANGELOG.md
-
-      - name: release
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: CHANGELOG.md
-          tag_name: v1.0.0
-          draft: false
-          prerelease: true
-          files: |
-            action.yml
-            README.md
