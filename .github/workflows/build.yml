@@ -27,11 +27,12 @@ jobs:
         with:
           convco_version: 'latest'
 
-      - uses: JoshuaKGoldberg/release-it-action@v0.3.2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          npm-token: ${{ secrets.GITHUB_TOKEN }}
-          release-it-args: 'premajor --preRelease=RC'
+      - name: release-it
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          npm install -g release-it
+          release-it premajor --no-prompt --ci
 
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
