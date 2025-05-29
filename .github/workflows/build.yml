@@ -4,22 +4,6 @@ on:
   push:
   merge_group:
 
-permissions:
-  actions: write
-  attestations: write
-  checks: write
-  contents: write
-  deployments: write
-  pull-requests: write
-  issues: write
-  statuses: write
-  discussions: write
-  packages: write
-  id-token: write
-  pages: write
-  security-events: write
-
-
 jobs:
   build:
     uses: './.github/workflows/common-build.yml'
@@ -31,6 +15,20 @@ jobs:
   release:
     runs-on: ubuntu-latest
     # needs: build
+    permissions:
+      # actions: write
+      # attestations: write
+      # checks: write
+      contents: write
+      # deployments: write
+      pull-requests: write
+      # issues: write
+      # statuses: write
+      # discussions: write
+      # packages: write
+      # id-token: write
+      # pages: write
+      # security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
