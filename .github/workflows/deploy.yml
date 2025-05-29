@@ -49,7 +49,7 @@ jobs:
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           npm install -g release-it --force
-          release-it premajor --preRelease=RC -i major --ci
+          release-it premajor --preRelease=RC -i major --git.commit=false --git.push=false --ci
           git tag | tail -1
           echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
 
