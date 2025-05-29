@@ -36,6 +36,7 @@ jobs:
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
         run: |
+          git tag
           git tag -d v1.0.0 || true
           git tag v1.0.0
           git push origin v1.0.0 --force || true
