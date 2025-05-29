@@ -53,20 +53,6 @@ jobs:
           git tag | tail -1
           echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
 
-      # - name: Changelog generation
-      #   # TODO: Compare against the correct branch or commit
-      #   run: |
-      #     git tag
-      #     git tag -d v1.0.0 || true
-      #     git tag v1.0.0
-
-      # - uses: googleapis/release-please-action@v4
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     release-type: simple
-      #     skip-github-pull-request: true
-      #     skip-github-release: false
-
       - uses: convco/convco-action@v0.2.0
         with:
           convco_version: 'latest'
