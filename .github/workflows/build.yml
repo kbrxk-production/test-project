@@ -44,6 +44,7 @@ jobs:
           # npm install -g release-it --force
           # release-it prepatch --preRelease=RC --git.commit=false --git.push=false --ci
           npm install -g semantic-release
+          npm install semantic-release
           semantic-release -t 'v${version}' --ci
           git tag | tail -1
           echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
