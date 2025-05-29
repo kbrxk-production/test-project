@@ -11,3 +11,63 @@ jobs:
       language: 'dotnet'
       net_version: '6.0'
       net_framework: 'console'
+
+  release:
+    runs-on: ubuntu-latest
+    # needs: build
+    permissions:
+      # actions: write
+      # attestations: write
+      # checks: write
+      contents: write
+      # deployments: write
+      pull-requests: write
+      # issues: write
+      # statuses: write
+      # discussions: write
+      # packages: write
+      # id-token: write
+      # pages: write
+      # security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: release-it
+        id: release_it
+        run: |
+          set -ex
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          # npm install -g release-it --force
+          # release-it prepatch --preRelease=RC --git.commit=false --git.push=false --ci
+          npm install -g semantic-release
+          semantic-release -t 'v${version}' --ci
+          git tag | tail -1
+          echo "version=$(git tag | tail -1)" >> "$GITHUB_OUTPUT"
+
+      - uses: convco/convco-action@v0.2.0
+        with:
+          convco_version: 'latest'
+
+      - name: Changelog generation
+        run: |
+          VERSION=${{ steps.release_it.outputs.version }}
+          echo "Generating changelog for version: $VERSION"
+          convco changelog -m1 $VERSION | tee CHANGELOG.md
+
+      - name: release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body_path: CHANGELOG.md
+          tag_name: ${{ steps.release_it.outputs.version }}
+          draft: false
+          prerelease: true
+          # TODO: Add the path to your release assets
+          files: |
+            action.yml
+            README.md
