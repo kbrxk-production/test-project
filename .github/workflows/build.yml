@@ -64,7 +64,7 @@ jobs:
       - name: Changelog generation
         # TODO: Compare against the correct branch or commit
         run: |
-          VERSION=$(git tag | tail -1)
+          export VERSION=$(git tag | tail -1)
           convco changelog -m1 $VERSION | tee CHANGELOG.md
 
       - name: release
@@ -74,7 +74,7 @@ jobs:
         with:
           body_path: CHANGELOG.md
           # TODO: Set the tag name for your release
-          tag_name: '{{ env.VERSION }}'
+          tag_name: ${{ env.VERSION }}
           draft: false
           prerelease: true
           # TODO: Add the path to your release assets
